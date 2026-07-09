@@ -5,3 +5,6 @@ Thumbs.db
 *~
 .idea/
 .vscode/
+
+# Serena local project config (machine-specific paths)
+.serena/
