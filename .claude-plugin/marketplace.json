@@ -1,0 +1,16 @@
+{
+  "name": "fable-method",
+  "description": "The Fable Way — a self-contained working-discipline plugin for capable models; each workspace grows its own git-ignored project overlay.",
+  "owner": { "name": "debabsah" },
+  "plugins": [
+    {
+      "name": "fable-method",
+      "description": "Self-contained 'Fable Way' working discipline: an auto-triggering method skill + runner skills (scope, adversarial review, verify, ship), plus a per-workspace git-ignored .fable/project.md overlay. No external plugin/skill dependencies.",
+      "version": "0.1.0",
+      "author": { "name": "debabsah" },
+      "category": "developer-tools",
+      "tags": ["method", "discipline", "verification", "adversarial-review", "planning", "workflow", "fable"],
+      "source": "./"
+    }
+  ]
+}
