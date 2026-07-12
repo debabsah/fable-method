@@ -45,8 +45,10 @@ A capable model rarely fails because it isn't smart enough. It fails because, un
 - It **builds on a file, dataset, or API response it never actually opened.**
 - It **rubber-stamps its own work** instead of getting an independent look.
 - It **treats a green build as proof of the claim above it** — "it ran," "deploy healthy," "containers up" — none of which is "the output is correct."
+- It **debugs by mutation** — patch, rerun, hope — and calls the third attempt at the same fix progress.
+- It **forgets in-flight work between sessions** — decisions get re-litigated, half-done tasks restart from zero.
 
-Each of these is one skipped check. `fable-method` makes the check the path of least resistance instead of the thing you have to remember to do.
+Each of these is one skipped check or one lost record. `fable-method` makes the check the path of least resistance instead of the thing you have to remember to do.
 
 ---
 
@@ -125,9 +127,13 @@ flowchart TD
     E --> F["<b>Re-decide<br/>on the result</b>"]
     F --> G["<b>Report calibrated</b><br/>verified vs. assumed"]
     G --> H["<b>Docs & handoff</b>"]
-    D -. "green is suspect" .-> B
+    D -. "red, or a green that<br/>came too easily" .-> X["<b>Debug</b><br/>hypothesis ledger;<br/>root-cause the escape"]
+    X -. "invariant fixed,<br/>re-verify" .-> D
+    G -. "no ledger? bounced<br/>by the Stop gate" .-> D
     F -. "new evidence" .-> A
 ```
+
+Work that spans sessions checkpoints the loop: `.fable/tasks/<slug>.md` records each decision at *Re-decide* and is retired at *Docs & handoff*, so the next session resumes mid-loop instead of restarting from zero.
 
 ---
 
