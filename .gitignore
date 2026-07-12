@@ -8,3 +8,6 @@ Thumbs.db
 
 # Serena local project config (machine-specific paths)
 .serena/
+
+# fable-method project overlay (per-machine method memory, never committed)
+.fable/
