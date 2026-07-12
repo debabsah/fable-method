@@ -6,7 +6,7 @@
     {
       "name": "fable-method",
       "description": "Self-contained 'Fable Way' working discipline: an auto-triggering method skill + runner skills (scope, debug, adversarial review, verify, ship), a deterministic Stop-hook calibration gate (done-claims must carry their evidence ledger), plus per-workspace git-ignored .fable/ state (project overlay + in-flight task files). No external plugin/skill dependencies.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": { "name": "debabsah" },
       "category": "developer-tools",
       "tags": ["method", "discipline", "verification", "adversarial-review", "planning", "workflow", "fable"],

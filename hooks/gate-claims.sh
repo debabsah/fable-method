@@ -19,8 +19,23 @@ transcript="$(printf '%s' "$payload" | sed -n 's/.*"transcript_path": *"\([^"]*\
 # Only gate turns that changed something; Q&A and read-only sessions pass free.
 grep -m1 -qE '"name" *: *"(Edit|Write|NotebookEdit)"' "$transcript" || exit 0
 
-# Final assistant message of the turn (raw JSONL line; token presence is enough).
-last="$(tail -n 200 "$transcript" | grep '"type": *"assistant"' | tail -n 1)"
+# The final assistant MESSAGE, not the final transcript line: the CLI writes one
+# entry per content block, and a tool_use entry can be the last thing flushed at
+# stop time (its input once tripped this gate — "done-claims" inside a shell
+# command). So: last assistant entry -> its message id -> every entry sharing
+# that id -> judge only their top-level "text" blocks (the user-visible claim
+# surface; excludes tool_use inputs and thinking). No text visible yet
+# (tool-call tail, thinking-only, partial flush) -> fail open.
+tailA="$(tail -n 400 "$transcript" | grep '"type": *"assistant"')"
+[ -n "$tailA" ] || exit 0
+lastline="$(printf '%s\n' "$tailA" | tail -n 1)"
+mid="$(printf '%s' "$lastline" | sed -n 's/.*"id": *"\(msg_[^"]*\)".*/\1/p')"
+if [ -n "$mid" ]; then
+  blob="$(printf '%s\n' "$tailA" | grep -F "$mid")"
+else
+  blob="$lastline"
+fi
+last="$(printf '%s\n' "$blob" | grep -oE '"text": *"([^"\\]|\\.)*"' | tr '\n' ' ')"
 [ -n "$last" ] || exit 0
 
 # No completion claim -> nothing to gate.
