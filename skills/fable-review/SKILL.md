@@ -5,7 +5,7 @@ description: Use before trusting or shipping an answer, design, plan, analysis, 
 
 # fable-review
 
-Don't self-vibe-check. **Manufacture independent adversaries** and let them attack the actual work. Uses only the built-in Agent/Task tool — no other plugin required.
+Don't self-vibe-check. **Manufacture independent adversaries** and let them attack the actual work. Uses only the built-in Agent/Task tool — no other plugin required. (For a pure code diff, a dedicated code-review command in your environment may be sharper for that narrow case; this runner needs nothing installed and covers every artifact — designs, plans, analyses, schemas, configs, prose.)
 
 ## Run it
 
@@ -15,7 +15,7 @@ Don't self-vibe-check. **Manufacture independent adversaries** and let them atta
    > You are an adversarial **<LENS>** reviewer. Your only job: find real defects in the actual artifact, not in the author's claims about it. Read the real files/output first; verify every assertion against the source. Be skeptical — do **not** rubber-stamp. **Steelman it first** (state what is genuinely sound), then confine your attack to what actually breaks. **Finding nothing wrong is a legitimate result — never invent a problem to look thorough.** READ-ONLY: do not edit files or change any state. Return findings as `severity (Critical/Important/Minor) · file:line · what's wrong · why it matters · how to fix`, plus a one-line verdict.
 
    Fill `<LENS>` and paste the exact scope (files, diff range, or artifact + the plan/requirements it's judged against).
-3. **Collect, dedup, and *verify each finding against the source* before it earns a place on the fix list** — a plausible-sounding finding that isn't in the actual artifact is dropped. Watch for reviewers converging because they shared context rather than because the defect is real.
+3. **Collect, dedup, and *verify each finding against the source* before it earns a place on the fix list** — a plausible-sounding finding that isn't in the actual artifact is dropped. Watch for reviewers converging because they shared context rather than because the defect is real. (This is the method's general **provenance rule**: any agent's report — reviewer, subagent, or you — is a claim until checked against the source; a subagent's "success" on delegated work gets the same treatment.)
 4. **Triage** what survives: fix-now / defer-with-a-record / accept-with-a-written-note. Report the verdict answer-first.
 
 ## When critique lands on *your own* work

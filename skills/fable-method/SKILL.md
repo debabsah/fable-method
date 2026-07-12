@@ -31,7 +31,29 @@ For a one-line edit or a simple lookup, skip this and just do the work.
 
 ## The loop
 
-`scope (R1,R6) → ground the unknowns cheapest-first (R1) → build one thin slice in the real env (R7) → verify at the claim (R1) → adversarial pass (R3) → re-decide on the result (R1,R4) → report calibrated (R5) → docs/handoff`. Reach for the runner at each effortful step; don't narrate it, run it.
+`scope (R1,R6) → ground the unknowns cheapest-first (R1) → build one thin slice in the real env (R7) → verify at the claim (R1) → adversarial pass (R3) → re-decide on the result (R1,R4) → report calibrated (R5) → docs/handoff`. Reach for the runner at each effortful step; don't narrate it, run it. When a check comes back red or reality contradicts the plan — the dashed edges of the loop — go to **fable-debug** before re-building.
+
+## The ledger — one shape for every claim
+
+Every completion claim ships with a ledger the reader can scan in seconds — the same tokens every time (they are load-bearing: the plugin's Stop-hook gate greps for them and bounces a done-claim that has none):
+
+```
+Verified: <claim> — ran <command/observation> -> saw <result>
+Assumed: <what you couldn't check> — why — how the user can check it
+PROVISIONAL: <number/result not yet safe to quote>
+```
+
+Claim strength tracks evidence strength — never let an `Assumed:` line read like a `Verified:` one (R5). **Provenance rule:** a report from any agent — *including your own subagents* — is a claim, not evidence; observe it yourself (open the file, run the command) or ledger it as secondhand. Uniformity is the point: the reader learns one shape and reads it for years.
+
+## Risk tiers — the minimum gate
+
+| Tier | The change is… | Minimum gate before "done" |
+|---|---|---|
+| **T1** | reversible, local — code on a branch, a doc, a scratch analysis | fable-verify |
+| **T2** | hard to reverse — schema/grain, deletions, wide refactors, published artifacts | fable-verify + one blind adversary (fable-review, one lens) |
+| **T3** | outward or production — deploy, send, money, credentials, data-destructive | fable-verify + fable-review panel + an explicit human gate (R6) |
+
+Unsure → tier up. Effort level never lowers a tier's minimum: a medium-effort session skips optional work, not gates.
 
 ## Standing habits (always on)
 
@@ -47,7 +69,7 @@ For a one-line edit or a simple lookup, skip this and just do the work.
 
 - Building on a file/dataset/API response you haven't opened. → R1
 - You just thought "should work" about something you can test right now. → verify (R1)
-- Attempt three of the same fix — stop patching; find the shared assumption underneath. → R2
+- Attempt three of the same fix — stop patching; find the shared assumption underneath. → fable-debug (R2)
 - Your last three actions came from the plan with no check against intermediate results. → re-decide (R4)
 - About to report done and the evidence is your intention, not an observation. → R1
 - A result came back suspiciously clean and you moved on. → treat good news as suspect (R1)
@@ -55,18 +77,19 @@ For a one-line edit or a simple lookup, skip this and just do the work.
 
 ## What this can and can't do (be honest about it)
 
-This installs the **discipline**. It does **not** supply the environment's hard guarantees — protected-branch/PR-flow, a permission gate that blocks irreversible actions, secrets management, review passes that actually run. On a capable model, those guarantees *plus* this method get you most of the way; where the environment can't enforce them, you must self-enforce, which is weaker — so lean harder on the runners there.
+This installs the **discipline**, plus one deterministic backstop: the Stop-hook **calibration gate**, which bounces a completion claim that carries no `Verified:`/`Assumed:`/`PROVISIONAL` marker. The gate enforces the *format* of honesty; it cannot check truth — that part is these skills. Write the ledger because it's accurate, not to satisfy a grep. It still does **not** supply the environment's other hard guarantees — protected-branch/PR-flow, a permission gate that blocks irreversible actions, secrets management, review passes that actually run. On a capable model, those guarantees *plus* this method get you most of the way; where the environment can't enforce them, you must self-enforce, which is weaker — so lean harder on the runners there.
 
 ## Routing — the runner skills (all shipped in this plugin)
 
 | Situation | Runner |
 |---|---|
 | Starting, or scope is fuzzy | **fable-scope** |
+| Something's wrong — a bug, an unexplained error, a fix that didn't hold | **fable-debug** |
 | Before you trust an answer, design, or plan | **fable-review** |
 | Before you claim anything is done/fixed/passing | **fable-verify** |
 | Shipping or handing off | **fable-ship** |
 
-Debugging → apply R2 (fix the invariant) + root-cause-the-escape. Planning → apply R4 + R7. **Project-specific conventions, the acceptance oracle, and known gotchas live in `.fable/project.md`** — see below.
+Planning → apply R4 + R7; multi-session work keeps its scope, decision log, and next action in `.fable/tasks/<slug>.md` (opened by fable-scope, retired by fable-ship). **Project-specific conventions, the acceptance oracle, and known gotchas live in `.fable/project.md`** — see below.
 
 ## The project overlay — `.fable/project.md`
 
@@ -76,5 +99,7 @@ Each workspace keeps a **git-ignored** `.fable/project.md` — the method's memo
 - **Thin + pointer-first:** point to `CLAUDE.md`/canonical docs for facts they own; never snapshot volatile facts (versions, hosts, status). Mark unverified items as *assumptions*; promote to *confirmed* when checked.
 - **Evolve as you learn:** when you *confirm* a durable fact — the oracle, a convention, or (especially) a **gotcha** (any trap you hit and diagnosed → `Gotcha: <trap> → Cause → Rule`) — add it and **announce what you changed** ("added X to `.fable/project.md`"). Log gotchas **liberally**; don't pre-judge whether they'll recur, and if one fits no category you've seen, log it anyway.
 - **At `fable-ship`:** compact it — dedup, retire obsolete entries, promote recurring ones — so it stays a tight page.
+- **Expire toward doubt:** stamp entries with a last-confirmed date; anything ~90 days unconfirmed demotes to *Working assumptions* until re-checked. A memory that can't expire becomes confidently wrong — the worst state for a trust system.
+- **In-flight work lives beside it:** one `.fable/tasks/<slug>.md` per multi-session task — first line `<!-- task: <slug> — next: <action> -->` (surfaced by the SessionStart hook), then the scope block, decision log, deferrals. The overlay holds what's true of the *project*; task files hold what's true of the *work in flight*.
 
 Git-ignored on purpose: per-machine, and it keeps AI-method artifacts out of a production repo (no fingerprint).

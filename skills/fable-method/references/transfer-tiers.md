@@ -11,5 +11,8 @@ Protected/prod-`main` PR-flow; a **permission gate that actually blocks** irreve
 ## Tier 3 — Judgment (hardest to transfer)
 *Which* unknown is load-bearing; *which* rule to try next when a diff won't close; *when* to reframe an ask upward; whether a green is suspect *this time*. A capable model (the target here, Opus 4.8) supplies much of this; a weaker one needs the Tier-2 scaffolding to compensate. In the source sessions a sharp operator also supplied part of the judgment at key moments.
 
+## What the harness guarantees — and what stays yours
+The plugin can enforce **calibration** (the Stop-hook gate bounces done-claims that carry no `Verified:`/`Assumed:`/`PROVISIONAL` marker), **memory** (the overlay carries this project's oracles and traps across sessions), and **firing** (SessionStart and Stop are deterministic; skills trigger by relevance). It cannot enforce the *truth* of any single claim — no text check can — and it does not supply the Tier-2 environment guarantees above. The user's residual job, even when everything works: read the `Assumed:` list, and own the T3 (outward/production) actions gated to them. Worry-less means that residual list is short and honest — never that it is empty.
+
 ## The honest caveat
 The plugin encodes the transferable part — the discipline — not Fable's raw intelligence or judgment; it does not turn a model into Fable. Treat its gates as force-multipliers on a capable model: keep verifying at the layer of the claim rather than assuming the method carries you the whole way.

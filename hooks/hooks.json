@@ -12,13 +12,12 @@
         ]
       }
     ],
-    "PreToolUse": [
+    "Stop": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/warn-push-main.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/gate-claims.sh\"",
             "async": false
           }
         ]

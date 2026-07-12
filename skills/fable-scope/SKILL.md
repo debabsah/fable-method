@@ -9,11 +9,13 @@ Bound the task before building. Produce a short **scope block** and stop for the
 
 **First, read `.fable/project.md` if it exists** — it holds this project's acceptance oracle, conventions, and known **gotchas**; scope on top of it (don't re-derive what's there, and don't re-step on a logged landmine). If it's missing, offer to create it (see the method skill's overlay protocol). Then:
 
-1. **Define done as a named external CHECK.** In one sentence: what artifact exists at the end, and *what will "correct" be compared against*? Prefer a concrete oracle (a known-good output, a reference system, a test, a count). If no oracle can exist, name the weakest acceptable substitute (a specific human's sign-off) — and say so. **If you can't write the check, you don't understand the task yet.**
+1. **Define done as a named external CHECK.** In one sentence: what artifact exists at the end, and *what will "correct" be compared against*? Prefer a concrete oracle (a known-good output, a reference system, a test, a count). If no oracle can exist, name the weakest acceptable substitute (a specific human's sign-off) — and say so. **If you can't write the check, you don't understand the task yet.** In an unfamiliar or long-untouched codebase, **run that check before changing anything** — you can't attribute a failure to your change if you never saw pre-change green.
 2. **Split known from assumed.** Two short columns: *Known (evidence)* vs *Assumed (inference)*. Anything in the second column that would change the solution if wrong is a candidate unknown.
 3. **Name the 1–3 load-bearing unknowns** — the facts that, if wrong, change the whole shape — and the *cheapest probe* to retire each. Gate on them: don't build past an unretired load-bearing unknown.
 4. **Fence it.** A short explicit "out of scope (recorded so nobody wonders)" list.
-5. **Right-size.** Note which decisions are cheap to reverse (defer them) vs the one or two that are expensive/unpatchable (spend the thinking there).
+5. **Right-size.** Note which decisions are cheap to reverse (defer them) vs the one or two that are expensive/unpatchable (spend the thinking there). Assign the task its **risk tier** (T1 reversible-local / T2 hard-to-reverse / T3 outward-production — the method skill's table); the tier fixes the minimum gate before any "done" claim.
 6. **Ask only outcome-changing questions.** If a fork changes what you'd build, ask **one** question, with a recommendation and the rejected cost. Otherwise pick the sensible default, state it in one line, and proceed. Ask to change outcomes, not to feel safe.
+
+**If the work will outlive this session (or is T2+):** open `.fable/tasks/<slug>.md` — first line `<!-- task: <slug> — next: <action> -->`, then the scope block, a decision log (`chose X over Y because Z; revisit if W`), and deferral buckets. Keep the pointer's `next:` current as you work (the SessionStart hook surfaces it every session); append a decision record at every re-decide moment. `fable-ship` retires the file.
 
 Output the scope block, then continue. Re-open it if a later result invalidates an assumption.

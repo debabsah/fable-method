@@ -1,8 +1,8 @@
 {
   "name": "fable-method",
-  "version": "0.1.0",
-  "description": "Installs 'The Fable Way' working discipline for capable models (target: Opus 4.8): a self-contained, auto-triggering method skill plus runner skills (scope, adversarial review, verify, ship) that spawn plain general-purpose subagents with inline prompts. No dependency on any other plugin or skill. Each workspace grows its own git-ignored .fable/project.md overlay (acceptance oracle, conventions, gotchas). Distilled from a forensic study of the Fable model.",
+  "version": "0.2.0",
+  "description": "Installs 'The Fable Way' working discipline, built for Opus 4.8 at medium-xhigh effort: an auto-triggering method skill plus runner skills (scope, debug, adversarial review, verify, ship) that spawn plain general-purpose subagents; a deterministic Stop-hook calibration gate that bounces completion claims lacking a Verified/Assumed/PROVISIONAL evidence ledger; and a per-workspace git-ignored .fable/ state dir — project.md overlay (acceptance-oracle table with expected outputs, conventions, gotchas, expiry-toward-doubt) plus tasks/ files that carry multi-session work across sessions. No dependency on any other plugin or skill. Distilled from a forensic study of the Fable model.",
   "author": { "name": "debabsah" },
   "license": "MIT",
-  "keywords": ["method", "discipline", "verification", "adversarial-review", "planning", "workflow", "fable"]
+  "keywords": ["method", "discipline", "verification", "calibration", "adversarial-review", "planning", "workflow", "fable"]
 }
