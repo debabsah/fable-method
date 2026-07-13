@@ -55,6 +55,18 @@ Claim strength tracks evidence strength — never let an `Assumed:` line read li
 
 Unsure → tier up. Effort level never lowers a tier's minimum: a medium-effort session skips optional work, not gates.
 
+## The plan shape
+
+Scope produces the check; the plan gets you there. Its shape:
+
+1. **Resolution decays with distance.** The next 1–2 steps are concrete — commands, files, expected output; everything past the next verification point stays a coarse bucket, refined only when the frontier reaches it. Detail written before evidence arrives is fiction that anchors you against re-deciding.
+2. **Every step ends at a checkpoint, not an activity.** The boundary is an observable — "after this, `X` prints `Y`" — never "implement Z." A step without a check attached is a hope, not a step; execution moves from verified state to verified state.
+3. **Sequence by information, not deliverable order.** Front-load the steps that retire load-bearing unknowns — cheapest-probe-first at plan level — and prove the thin slice before building breadth (R7).
+4. **The plan is a versioned hypothesis, not a contract.** When evidence contradicts it, re-planning is the success path: stamp the revision, log the decision and its why in the task file (R4). Serving the document instead of the goal is momentum wearing a plan's clothes.
+5. **Decompose to the tier, not to a template.** T1 needs a next-action line; T3 earns the full task file. Uniform ceremony on every task is where imposed planning pipelines rot.
+
+**Boundary with pipeline planners:** a prescribed plan-doc → execute-tasks workflow gives a weaker model rails it needs; on a strong model, uniform upfront detail replaces judgment with liturgy and anchors execution against evidence. Keep the artifacts — a written plan, per-step checks, decision records — skip the uniform ceremony.
+
 ## The code stance — calibrated code
 
 Code is calibrated like the reports: **no silent failure paths** (every fallback announces itself or doesn't exist); **fail-open vs fail-closed chosen by blast radius, named in a comment**; **code leaves evidence** (scripts print what they did, with numbers); **loud at the boundary, confident inside** (validate at trust boundaries; assert invariants internally); **comments state constraints, not narration**; **house style beats this stance** — it fills silence, never fights a convention (per-project overrides: the overlay's Conventions). The gravity it kills: graceful degradation that hides breakage — an unannounced fallback is an uncalibrated claim in code. Full stance + the minimalism boundary: [references/code-stance.md](references/code-stance.md).

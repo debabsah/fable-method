@@ -18,4 +18,6 @@ Bound the task before building. Produce a short **scope block** and stop for the
 
 **If the work will outlive this session (or is T2+):** open `.fable/tasks/<slug>.md` — first line `<!-- task: <slug> — next: <action> -->`, then the scope block, a decision log (`chose X over Y because Z; revisit if W`), and deferral buckets. Keep the pointer's `next:` current as you work (the SessionStart hook surfaces it every session); append a decision record at every re-decide moment. `fable-ship` retires the file.
 
+**Plan to the shape** (method skill → *The plan shape*): the next 1–2 steps concrete with their checkpoints; everything past the next verification point stays a coarse bucket. A step without a check attached is a hope, not a step.
+
 Output the scope block, then continue. Re-open it if a later result invalidates an assumption.
