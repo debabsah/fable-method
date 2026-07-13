@@ -5,7 +5,7 @@ description: Use before trusting or shipping an answer, design, plan, analysis, 
 
 # fable-review
 
-Don't self-vibe-check. **Manufacture independent adversaries** and let them attack the actual work. Uses only the built-in Agent/Task tool — no other plugin required. (For a pure code diff, a dedicated code-review command in your environment may be sharper for that narrow case; this runner needs nothing installed and covers every artifact — designs, plans, analyses, schemas, configs, prose.)
+Don't self-vibe-check. **Manufacture blind adversaries** — fresh context, none of your rationale — and let them attack the actual work. Uses only the built-in Agent/Task tool — no other plugin required. (For a pure code diff, a dedicated code-review command in your environment may be sharper for that narrow case; this runner needs nothing installed and covers every artifact — designs, plans, analyses, schemas, configs, prose.)
 
 ## Run it
 
