@@ -33,6 +33,7 @@ Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-
 - [The hooks](#the-hooks)
 - [Where it came from](#where-it-came-from)
 - [What it can and can't do](#what-it-can-and-cant-do)
+- [Getting the best results](#getting-the-best-results)
 - [Requirements](#requirements)
 - [License](#license)
 
@@ -265,6 +266,18 @@ The study artifacts aren't bundled in this repo — read this section as provena
 **This plugin will not give you Fable's raw intelligence or judgment.** That does not transfer, and no skill can fake it. And it cannot make any single claim *true* — no text check can. What it enforces is **calibration**: claims arrive labeled with their evidence (`Verified:`) or their doubt (`Assumed:`/`PROVISIONAL`), the stopping moment is gated deterministically, and your project's own definition of "correct" rides along in the overlay. The gates catch the large class of *momentum* mistakes: unverified "done," building on unopened files, self-rubber-stamping, symptom-not-root-cause fixes, uncalibrated claims.
 
 Your job, even when everything works: read the short `Assumed:` list, and rule on the outward or production actions it gates to you. **Worry-less means that residual list is short and honest — not that it is empty.**
+
+---
+
+## Getting the best results
+
+**Pair it with an economy mode — they own different axes.** `fable-method` never tells the model how *much* code to write; it governs whether you can trust what comes back (the gates, the ledger, the memory) and how the code fails (the stance). A minimalism mode like [ponytail](https://github.com/DietrichGebert/ponytail) owns the other axis: does this need to exist, reuse before writing, shortest working diff. Run both and each does its own job — the economy mode decides how much code exists; `fable-method` decides whether the claims about it hold. The one seam between them — announcements and asserts make code slightly longer than pure minimalism would write — has a documented tie-breaker in [`code-stance.md`](skills/fable-method/references/code-stance.md): safety is never traded for brevity, and ponytail's own carve-outs say the same from its side.
+
+- **Answer the oracle question.** When the method offers to create `.fable/project.md`, the minute you spend naming the real acceptance oracle is the highest-leverage minute in this plugin — every scope, verify, and gate decision compounds on it.
+- **Say a runner's name when the stakes are real.** The runners auto-trigger, but "run fable-review on this plan" or "fable-verify that" fires the gate deterministically instead of hopefully — worth doing before anything hard to reverse.
+- **Don't fight a gate bounce.** A bounce isn't an error; it's a claim being recalibrated to its evidence. If bounces recur, read `.fable/gate-log` — a repeating pattern there is a working-habits gotcha, and `fable-ship` folds it into the overlay.
+- **Keep pure code diffs with your dedicated review tooling** if your environment ships some; the fable runners cover everything else — plans, analyses, schemas, configs, prose — and work with nothing else installed.
+- **Let the environment enforce what it can.** Branch protection, permission gates, and secrets belong to your forge and harness ([what transfers, and what can't](skills/fable-method/references/transfer-tiers.md)); the method self-enforces only where the environment has no reach.
 
 ---
 
