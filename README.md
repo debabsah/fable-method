@@ -3,7 +3,7 @@
 **A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.0-green.svg)](./.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.5.1-green.svg)](./.claude-plugin/plugin.json)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
 [![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](#self-contained-by-design)
 [![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
@@ -192,7 +192,7 @@ The method skill is **general** — the same reflexes for every project. But rea
 
 The reflexes keep the model honest in the moment. The overlay is where that honesty turns into **accumulated, project-specific expertise**.
 
-**What it holds** (thin, and only what's confirmed):
+**What it holds** (thin — only what's confirmed, project-specific, and not re-derivable by exploring):
 
 - **The acceptance-oracle table** — the single highest-value fact: how "correct" is *checked* here, one row per claim type, with the command *and what pass literally prints* (exit 0 with `3 skipped` is not the pass you meant). This is what R1 and `fable-verify` diff against.
 - **Pointers to the canonical docs** — where truth lives (`CLAUDE.md`, runbooks). It *points*, never copies, so nothing goes stale.
