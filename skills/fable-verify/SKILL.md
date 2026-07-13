@@ -29,6 +29,6 @@ Before any success/completion claim or expression of satisfaction:
 
 ## Red flags — you have NOT verified
 
-"should", "probably", "seems to", "Great/Perfect/Done!" before running anything, trusting a subagent's "success" without checking its diff, relying on a partial check, "just this once." Any of these → run the command, read the output, *then* claim.
+"should", "probably", "seems to", "Great/Perfect/Done!" before running anything, trusting a subagent's "success" without checking its diff, relying on a partial check, a fallback you just wrote that swallows a failure (`except: pass`, empty-on-error, a guessed default — announce it or delete it), "just this once." Any of these → run the command, read the output, *then* claim.
 
 The plugin's Stop-hook gate bounces done-claims that carry no ledger marker — it checks the format; the truth is this skill's job.

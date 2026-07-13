@@ -3,7 +3,7 @@
 **A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.1-green.svg)](./.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](./.claude-plugin/plugin.json)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
 [![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](#self-contained-by-design)
 [![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
@@ -27,6 +27,7 @@ Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-
 - [The seven reflexes](#the-seven-reflexes)
 - [The loop](#the-loop)
 - [The ledger](#the-ledger--one-shape-for-every-claim)
+- [The code stance](#the-code-stance--calibrated-code)
 - [The runner skills](#the-runner-skills)
 - [The self-building project memory](#the-self-building-project-memory--fableprojectmd)
 - [The hooks](#the-hooks)
@@ -148,6 +149,14 @@ PROVISIONAL: <number/result not yet safe to quote>
 ```
 
 The Stop hook greps for exactly these tokens: a done-claim with none of them gets bounced back once, to attach its evidence or downgrade itself. The gate enforces the format of honesty; the skills carry the substance. And a report from any agent — including subagents the model spawned — counts as a claim, not evidence, until it's checked against the source (the **provenance rule**).
+
+---
+
+## The code stance — calibrated code
+
+The reflexes calibrate claims; the stance calibrates the code itself, against the most universal bad habit in software — graceful degradation that hides breakage. No silent failure paths: a fallback announces itself or doesn't exist. Fail-open vs fail-closed is chosen by blast radius, and a comment names the choice. Code leaves evidence — scripts print what they did, with numbers. Loud at trust boundaries, assertive inside. Comments state constraints, not narration. And house style always beats the stance: it fills silence in a codebase, never fights a convention.
+
+It composes with minimalism modes like ponytail — they govern how much code exists; this governs how it fails and what evidence it leaves. Full text: [`skills/fable-method/references/code-stance.md`](skills/fable-method/references/code-stance.md).
 
 ---
 

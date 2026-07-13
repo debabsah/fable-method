@@ -19,7 +19,7 @@ Then only the sections you actually have (drop the rest):
 ##   | Claim type | Command / observation | What pass literally prints | Counts where | Last confirmed |
 ##   (build, behavior slice, data correctness, regression, deploy health — only rows this project has;
 ##    "counts where" = local / CI / staging — local green counts only where parity is proven)
-## Conventions & guardrails              — project-specific method notes (point to CLAUDE.md for what it owns)
+## Conventions & guardrails              — project-specific method notes; code-stance overrides live here (point to CLAUDE.md for what it owns)
 ## Gotchas (open — log every trap)       — `<trap> → Cause → Rule` (+ optional date); free-form types; log liberally
 ## Record shapes                         — how this project logs decisions / incidents
 ## Working assumptions (unverified)       — inferred-but-unchecked; promote up when confirmed

@@ -55,6 +55,10 @@ Claim strength tracks evidence strength — never let an `Assumed:` line read li
 
 Unsure → tier up. Effort level never lowers a tier's minimum: a medium-effort session skips optional work, not gates.
 
+## The code stance — calibrated code
+
+Code is calibrated like the reports: **no silent failure paths** (every fallback announces itself or doesn't exist); **fail-open vs fail-closed chosen by blast radius, named in a comment**; **code leaves evidence** (scripts print what they did, with numbers); **loud at the boundary, confident inside** (validate at trust boundaries; assert invariants internally); **comments state constraints, not narration**; **house style beats this stance** — it fills silence, never fights a convention (per-project overrides: the overlay's Conventions). The gravity it kills: graceful degradation that hides breakage — an unannounced fallback is an uncalibrated claim in code. Full stance + the minimalism boundary: [references/code-stance.md](references/code-stance.md).
+
 ## Standing habits (always on)
 
 - Convert relative → absolute: "tomorrow" → a date, "latest" → a version.
