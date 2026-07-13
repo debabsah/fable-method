@@ -3,7 +3,7 @@
 **A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.2-green.svg)](./.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.5.3-green.svg)](./.claude-plugin/plugin.json)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
 [![Plugin deps](https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg)](#self-contained-by-design)
 [![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
@@ -178,9 +178,9 @@ Each effortful step has a runner. They auto-trigger, or you can invoke one by na
 |-----------|--------|--------------|
 | Starting, or the scope is fuzzy | **`fable-scope`** | Define "done" as a named external check; split *known (evidence)* from *assumed (inference)*; name the 1–3 load-bearing unknowns and the cheapest probe to retire each. |
 | Something's wrong — a bug, an unexplained error, a fix that didn't hold | **`fable-debug`** | Reproduce first; state the contradiction; run a hypothesis ledger of predicted-outcome probes, cheapest first; fix the invariant, verify red→green on the exact reproduction, then root-cause *the escape* and mint the rule that would have caught it. |
-| Before you trust an answer, design, or plan | **`fable-review`** | Spawn N blind adversaries in parallel — fresh context each, one lens each — then dedup, verify every finding against the source, and triage fix-now / defer / accept. |
+| Before you trust an answer, design, or plan | **`fable-review`** | Run the deterministic checks first, then spawn blind adversaries sized to the tier — one lens at T2, a 2–5 panel at T3 — dedup, verify every finding against the source, and triage fix-now / defer / accept. |
 | Before you claim done, fixed, or passing | **`fable-verify`** | The evidence-before-claims gate: identify the command that would *prove* the claim → run it fresh → read the whole output → verify at the layer of the claim → *then* claim it. |
-| Shipping or handing off | **`fable-ship`** | A calibrated done-claim (answer-first, verified-vs-assumed), docs-as-done so a stranger could redo it, and compaction of the project overlay. |
+| Shipping or handing off | **`fable-ship`** | A calibrated done-claim (answer-first, verified-vs-assumed), docs scoped to the record the change affects, and the project overlay curated on threshold. |
 
 ---
 
@@ -205,7 +205,7 @@ The reflexes keep the model honest in the moment. The overlay is where that hone
 - **It's always in the room, for near-free.** A `SessionStart` hook surfaces its one-line pointer as ambient context every session; the full file is read only when the method triggers (*tiered loading* — no cost while idle).
 - **`fable-scope` reads it first**, so new work is scoped on top of what's already known — it won't re-derive settled facts or re-step on a logged trap.
 - **It writes itself as you learn.** When the model *confirms* a durable fact — the oracle, a convention, or (especially) a gotcha — it appends it and **announces the change** ("added X to `.fable/project.md`"). Confirmed-only; it doesn't hoard guesses.
-- **`fable-ship` compacts it** — dedup, retire the stale, promote the recurring — so it stays a tight page instead of sprawling.
+- **`fable-ship` folds in what each task confirmed, and compacts on threshold** — dedup, retire the stale, promote the recurring when the page fills — so it stays a tight page instead of sprawling.
 - **It expires toward doubt.** Entries carry a last-confirmed date; stale ones demote to *working assumptions* until re-checked — the memory can be wrong only briefly, never confidently.
 - **In-flight work rides beside it.** Each multi-session task keeps a `.fable/tasks/<slug>.md` — its scope, anchors, decision log (`chose X over Y because Z; revisit if W`), deferrals, and a `next:` pointer the `SessionStart` hook surfaces (with a mechanical staleness stamp once it sits untouched) — opened by `fable-scope`, retired by `fable-ship`. The overlay remembers the *project*; task files remember the *work in flight*, so session 10 resumes instead of re-deriving.
 - **It keeps the score.** Beside the overlay live `.fable/claims-log` — every shipped `Verified:`, which `fable-debug` marks FALSIFIED when a vouched-for behavior later breaks — and `.fable/residuals.md`, the undischarged `Assumed:`/`PROVISIONAL` lines, surfaced at SessionStart until discharged. Over weeks, that record answers the question the ledger alone can't: whether the `Verified:` token deserves your trust.

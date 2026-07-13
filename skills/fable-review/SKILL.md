@@ -9,14 +9,15 @@ Don't self-vibe-check. **Manufacture blind adversaries** — fresh context, none
 
 ## Run it
 
-1. **Pick 2–5 independent lenses** for what's under review — e.g. correctness/logic, security, data/edge-cases, architecture, requirements-fit, ops. One concern per lens; no overlap.
-2. **Dispatch one general-purpose subagent per lens, all in a single message** (multiple Agent/Task calls in one turn = they run in parallel). Use plain **general-purpose** subagents — do not rely on any custom agent type. Give each the blind-adversary prompt (below; full template in [../fable-method/references/adversary-prompt.md](../fable-method/references/adversary-prompt.md)):
+1. **Run the deterministic checks first** — the acceptance oracle, tests, linters, validators. Don't spend a reviewer on what a tool catches; reviewers are for judgment.
+2. **Size the panel to the risk tier** (the method skill's table): **T2 → one lens**, the dominant risk; **T3 → 2–5 lenses**. Going past the tier minimum needs a named reason — a specific unresolved risk, not thoroughness for its own sake. Lenses — e.g. correctness/logic, security, data/edge-cases, architecture, requirements-fit, ops. One concern per lens; no overlap.
+3. **Dispatch one general-purpose subagent per lens, all in a single message** (multiple Agent/Task calls in one turn = they run in parallel). Use plain **general-purpose** subagents — do not rely on any custom agent type. Give each the blind-adversary prompt (below; full template in [../fable-method/references/adversary-prompt.md](../fable-method/references/adversary-prompt.md)):
 
    > You are an adversarial **<LENS>** reviewer. Your only job: find real defects in the actual artifact, not in the author's claims about it. Read the real files/output first; verify every assertion against the source. Be skeptical — do **not** rubber-stamp. **Steelman it first** (state what is genuinely sound), then confine your attack to what actually breaks. **Finding nothing wrong is a legitimate result — never invent a problem to look thorough.** READ-ONLY: do not edit files or change any state. Return findings as `severity (Critical/Important/Minor) · file:line · what's wrong · why it matters · how to fix`, plus a one-line verdict.
 
    Fill `<LENS>` and paste the exact scope (files, diff range, or artifact + the plan/requirements it's judged against).
-3. **Collect, dedup, and *verify each finding against the source* before it earns a place on the fix list** — a plausible-sounding finding that isn't in the actual artifact is dropped. Watch for reviewers converging because they shared context rather than because the defect is real. (This is the method's general **provenance rule**: any agent's report — reviewer, subagent, or you — is a claim until checked against the source; a subagent's "success" on delegated work gets the same treatment.)
-4. **Triage** what survives: fix-now / defer-with-a-record / accept-with-a-written-note. Report the verdict answer-first.
+4. **Collect, dedup, and *verify each finding against the source* before it earns a place on the fix list** — a plausible-sounding finding that isn't in the actual artifact is dropped. Watch for reviewers converging because they shared context rather than because the defect is real. (This is the method's general **provenance rule**: any agent's report — reviewer, subagent, or you — is a claim until checked against the source; a subagent's "success" on delegated work gets the same treatment.)
+5. **Triage** what survives: fix-now / defer-with-a-record / accept-with-a-written-note. Report the verdict answer-first.
 
 ## When critique lands on *your own* work
 
