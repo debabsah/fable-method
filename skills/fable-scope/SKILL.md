@@ -7,6 +7,8 @@ description: Use at the start of a non-trivial task, or when the goal is fuzzy, 
 
 Bound the task before building. Produce a short **scope block** and stop for the human only if a fork genuinely changes what you'd build.
 
+**T1 fast path:** reversible and local → write the one-line check (step 1) and go. The full block below is for T2+ or fuzzy scope.
+
 **First, read `.fable/project.md` if it exists** — it holds this project's acceptance oracle, conventions, and known **gotchas**; scope on top of it (don't re-derive what's there, and don't re-step on a logged landmine). If it's missing, offer to create it (see the method skill's overlay protocol). Then:
 
 1. **Define done as a named external CHECK.** In one sentence: what artifact exists at the end, and *what will "correct" be compared against*? Prefer a concrete oracle (a known-good output, a reference system, a test, a count). If no oracle can exist, name the weakest acceptable substitute (a specific human's sign-off) — and say so. **If you can't write the check, you don't understand the task yet.** In an unfamiliar or long-untouched codebase, **run that check before changing anything** — you can't attribute a failure to your change if you never saw pre-change green.
@@ -16,7 +18,7 @@ Bound the task before building. Produce a short **scope block** and stop for the
 5. **Right-size.** Note which decisions are cheap to reverse (defer them) vs the one or two that are expensive/unpatchable (spend the thinking there). Assign the task its **risk tier** (T1 reversible-local / T2 hard-to-reverse / T3 outward-production — the method skill's table); the tier fixes the minimum gate before any "done" claim.
 6. **Ask only outcome-changing questions.** If a fork changes what you'd build, ask **one** question, with a recommendation and the rejected cost. Otherwise pick the sensible default, state it in one line, and proceed. Ask to change outcomes, not to feel safe.
 
-**If the work will outlive this session (or is T2+):** open `.fable/tasks/<slug>.md` — first line `<!-- task: <slug> — next: <action> -->`, then the scope block, a decision log (`chose X over Y because Z; revisit if W`), and deferral buckets. Keep the pointer's `next:` current as you work (the SessionStart hook surfaces it every session); append a decision record at every re-decide moment. `fable-ship` retires the file.
+**If the work will outlive this session (or is T2+):** open `.fable/tasks/<slug>.md` — first line `<!-- task: <slug> — next: <action> -->`, then the scope block, an **Anchors** line (the oracle, the fence, human rulings — re-stated at every re-decide; moving one is an escalation to the human, not a re-plan), a decision log (`chose X over Y because Z; revisit if W`), and deferral buckets. Keep the pointer's `next:` current as you work (the SessionStart hook surfaces it every session); append a decision record at every re-decide moment. `fable-ship` retires the file.
 
 **Plan to the shape** (method skill → *The plan shape*): the next 1–2 steps concrete with their checkpoints; everything past the next verification point stays a coarse bucket. A step without a check attached is a hope, not a step.
 

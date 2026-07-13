@@ -1,6 +1,6 @@
 ---
 name: fable-verify
-description: Use when about to claim work is complete, fixed, passing, correct, or done — before committing, opening a PR, or moving to the next task. Also when a result looks good and you're tempted to move on, or a green signal came back suspiciously clean.
+description: Use when about to claim work is complete, fixed, passing, correct, or done — before committing, opening a PR, or moving to the next task. Also when a result looks good and you're tempted to move on, or a green signal came back suspiciously clean. If the environment ships a dedicated end-to-end verify skill for exercising code changes, prefer it for driving the change; this runner owns claim calibration (the evidence ledger) and non-code artifacts.
 ---
 
 # fable-verify
@@ -20,6 +20,8 @@ Before any success/completion claim or expression of satisfaction:
 ## Sharpen it
 
 - **Know what pass looks like before you run it:** pull the oracle from `.fable/project.md` — the command *and* what green literally prints. Exit 0 with `3 skipped` is not the pass you meant.
+- **The counting environment is binding:** the oracle row's *Counts where* decides where green counts. Local green on a CI-counted claim stays `PROVISIONAL` until the environment of record agrees — quote it (e.g. `gh pr checks`).
+- **Discharge residuals:** when this evidence settles an entry in `.fable/residuals.md`, mark it discharged and announce it.
 - **Categorical over enumerated:** assert a property over *all* items of a class, so the check inspects cases you didn't think to list. When it over-fires, diagnose *scope vs. substance* before loosening it.
 - **Oracle over the whole population:** when reconstructing hidden logic, diff your candidate against a readable known-good output over *every* row, not a sample; state plainly which parts are transcribed vs. inferred.
 - **Sample the tails:** first item, last item, weirdest item — not just the middle.

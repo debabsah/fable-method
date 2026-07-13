@@ -12,15 +12,23 @@ run() { # $1 = stop_hook_active value; echoes gate exit code
     | (cd "$tmp" && bash "$gate") >/dev/null 2>&1
   echo $?
 }
+run_spaced() { # spaced JSON serialization of the loop guard
+  printf '{"session_id":"t","transcript_path":"%s","stop_hook_active" : true}' "$tmp/t.jsonl" \
+    | (cd "$tmp" && bash "$gate") >/dev/null 2>&1
+  echo $?
+}
 check() { # name expected got
   if [ "$2" = "$3" ]; then echo "PASS: $1"; else echo "FAIL: $1 (expected exit $2, got $3)"; fails=$((fails+1)); fi
 }
 
+user='{"type":"user","message":{"role":"user","content":[{"type":"text","text":"please fix it"}]}}'
 edit='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Edit","input":{}}]}}'
+mcpedit='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__serena__replace_content","input":{}}]}}'
 claim='{"type":"assistant","message":{"content":[{"type":"text","text":"All fixed and tests passing. Ship it."}]}}'
 calibrated='{"type":"assistant","message":{"content":[{"type":"text","text":"Done. Verified: pytest -> 42 passed, 0 failed. Assumed: staging matches prod."}]}}'
 noclaim='{"type":"assistant","message":{"content":[{"type":"text","text":"Here is the analysis you asked for."}]}}'
-
+idiom='{"type":"assistant","message":{"id":"msg_i1","content":[{"type":"text","text":"Finished. Everything is implemented and all green."}]}}'
+sidechain='{"type":"assistant","isSidechain":true,"message":{"id":"msg_sc","content":[{"type":"text","text":"Subagent report. Verified: subtask ran clean."}]}}'
 split1='{"type":"assistant","message":{"id":"msg_s1","content":[{"type":"text","text":"Done. Verified: pytest -> 42 passed, 0 failed."}]}}'
 split2='{"type":"assistant","message":{"id":"msg_s1","content":[{"type":"text","text":"Left to you: end a turn with a bare \"done\" and watch it bounce."}]}}'
 ledgertext='{"type":"assistant","message":{"id":"msg_t8","content":[{"type":"text","text":"Shipped. Verified: push succeeded -> main updated."}]}}'
@@ -28,6 +36,7 @@ tooluse='{"type":"assistant","message":{"id":"msg_t9","content":[{"type":"tool_u
 splitbad1='{"type":"assistant","message":{"id":"msg_s2","content":[{"type":"text","text":"All work is complete now."}]}}'
 splitbad2='{"type":"assistant","message":{"id":"msg_s2","content":[{"type":"text","text":"Everything is done."}]}}'
 
+# original behavior
 mk "$edit" "$claim";      check "uncalibrated claim blocks"            2 "$(run false)"
 mk "$edit" "$calibrated"; check "claim with ledger passes"             0 "$(run false)"
 mk "$edit" "$claim";      check "stop_hook_active passes (loop guard)" 0 "$(run true)"
@@ -39,6 +48,21 @@ mk "$edit" "$splitbad1" "$splitbad2"; check "chunked uncalibrated claim still bl
 printf '{"transcript_path":"%s/absent.jsonl","stop_hook_active":false}' "$tmp" \
   | (cd "$tmp" && bash "$gate") >/dev/null 2>&1
 check "missing transcript fails open" 0 "$?"
+
+# design-review regressions (0.5.0)
+mk "$edit" "$claim";                    check "spaced stop_hook_active still loop-guards"        0 "$(run_spaced)"
+mk "$edit" "$user" "$claim";            check "stale edit before user msg: Q&A turn not gated"   0 "$(run false)"
+mk "$user" "$edit" "$claim";            check "edit within current turn still gates"             2 "$(run false)"
+mk "$user" "$mcpedit" "$claim";         check "MCP edit tool arms the gate"                      2 "$(run false)"
+mk "$user" "$edit" "$claim" "$sidechain"; check "sidechain Verified: cannot vouch for main claim" 2 "$(run false)"
+mk "$user" "$edit" "$idiom";            check "finished/implemented/all-green idioms gate"       2 "$(run false)"
+
+# two-sided gate-log (needs .fable/ in cwd; also exercises non-git-root fallback)
+mkdir -p "$tmp/.fable"
+mk "$user" "$edit" "$claim";      run false >/dev/null
+mk "$user" "$edit" "$calibrated"; run false >/dev/null
+grep -q "BOUNCE phrase=" "$tmp/.fable/gate-log" 2>/dev/null; check "gate-log records bounce with phrase" 0 "$?"
+grep -q "PASS phrase="   "$tmp/.fable/gate-log" 2>/dev/null; check "gate-log records armed pass"         0 "$?"
 
 if [ "$fails" -eq 0 ]; then echo "all checks pass"; else echo "$fails check(s) FAILED"; fi
 exit "$fails"

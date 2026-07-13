@@ -3,14 +3,14 @@
 **A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](./.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.5.0-green.svg)](./.claude-plugin/plugin.json)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
 [![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](#self-contained-by-design)
 [![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
 
 `fable-method` is a self-contained Claude Code plugin for developers doing real engineering work with Claude. It installs a set of **gates** — checks the model runs at each step — so it stops skipping the effortful ones under momentum: scope the work before building, ground assumptions before designing, get an independent adversary to attack the work before trusting it, check the actual claim (not just a green build that implies it) before declaring "done," diagnose by designed experiment — not patch-and-pray — when something breaks, and report what's verified apart from what's assumed.
 
-The claim moment is enforced **deterministically**: a Stop hook bounces any completion claim that arrives without its ledger, so "done" always reads as `Verified: <what> — ran <command> -> saw <result>`, or an honest `Assumed:`/`PROVISIONAL`. You act on the report by reading one short list — what it says it couldn't check — instead of re-deriving the work.
+The claim moment gets a **deterministic backstop**: a Stop hook bounces completion claims that arrive without their ledger, so "done" arrives as `Verified: <what> — ran <command> -> saw <result>`, or an honest `Assumed:`/`PROVISIONAL`. You act on the report by reading one short list — what it says it couldn't check — instead of re-deriving the work.
 
 Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-5` model — actually worked. ([Where it came from](#where-it-came-from).)
 
@@ -164,7 +164,7 @@ It composes with minimalism modes like ponytail — they govern how much code ex
 
 ## The plan shape
 
-Scoping names the check; the plan shape governs everything between there and done. **Resolution decays with distance** — the next step or two are concrete (commands, files, expected output), and everything past the next verification point stays a coarse bucket until the frontier reaches it. **Every step ends at a checkpoint, not an activity** ("after this, `X` prints `Y`" — never "implement Z"), so execution moves from verified state to verified state. **Steps are sequenced by information, not deliverable order**, retiring load-bearing unknowns first. **The plan is a versioned hypothesis, not a contract** — when evidence contradicts it, re-planning is the success path, recorded in the task file. And **decomposition follows the risk tier, not a template**: a reversible tweak needs a next-action line, not a phase document.
+Scoping names the check; the plan shape governs everything between there and done. **Resolution decays with distance** — the next step or two are concrete (commands, files, expected output), and everything past the next verification point stays a coarse bucket until the frontier reaches it. **Every step ends at a checkpoint, not an activity** ("after this, `X` prints `Y`" — never "implement Z"), so execution moves from verified state to verified state. **Steps are sequenced by information, not deliverable order**, retiring load-bearing unknowns first. **The plan is a versioned hypothesis, not a contract** — when evidence contradicts it, re-planning is the success path, recorded in the task file. Re-plans redraw the route, never the **anchors**: the acceptance oracle, the scope fence, and explicit human rulings stay fixed, and moving one is an escalation to the human, not a revision. And **decomposition follows the risk tier, not a template**: a reversible tweak needs a next-action line, not a phase document.
 
 That last rule is the deliberate contrast with plan-doc-then-execute pipelines: rails help a model that lacks the judgment; on a strong one, uniform upfront detail anchors execution against evidence. `fable-method` keeps the artifacts — the written plan, per-step checks, decision records — and skips the uniform ceremony.
 
@@ -207,7 +207,8 @@ The reflexes keep the model honest in the moment. The overlay is where that hone
 - **It writes itself as you learn.** When the model *confirms* a durable fact — the oracle, a convention, or (especially) a gotcha — it appends it and **announces the change** ("added X to `.fable/project.md`"). Confirmed-only; it doesn't hoard guesses.
 - **`fable-ship` compacts it** — dedup, retire the stale, promote the recurring — so it stays a tight page instead of sprawling.
 - **It expires toward doubt.** Entries carry a last-confirmed date; stale ones demote to *working assumptions* until re-checked — the memory can be wrong only briefly, never confidently.
-- **In-flight work rides beside it.** Each multi-session task keeps a `.fable/tasks/<slug>.md` — its scope, decision log (`chose X over Y because Z; revisit if W`), deferrals, and a `next:` pointer the `SessionStart` hook surfaces — opened by `fable-scope`, retired by `fable-ship`. The overlay remembers the *project*; task files remember the *work in flight*, so session 10 resumes instead of re-deriving.
+- **In-flight work rides beside it.** Each multi-session task keeps a `.fable/tasks/<slug>.md` — its scope, anchors, decision log (`chose X over Y because Z; revisit if W`), deferrals, and a `next:` pointer the `SessionStart` hook surfaces (with a mechanical staleness stamp once it sits untouched) — opened by `fable-scope`, retired by `fable-ship`. The overlay remembers the *project*; task files remember the *work in flight*, so session 10 resumes instead of re-deriving.
+- **It keeps the score.** Beside the overlay live `.fable/claims-log` — every shipped `Verified:`, which `fable-debug` marks FALSIFIED when a vouched-for behavior later breaks — and `.fable/residuals.md`, the undischarged `Assumed:`/`PROVISIONAL` lines, surfaced at SessionStart until discharged. Over weeks, that record answers the question the ledger alone can't: whether the `Verified:` token deserves your trust.
 
 A trimmed overlay reads like this:
 
@@ -237,9 +238,9 @@ See [`skills/fable-method/references/project-template.md`](skills/fable-method/r
 Two hooks — memory in, calibration out:
 
 - **`SessionStart`** — surfaces the current project's overlay pointer and one line per in-flight task file (`.fable/tasks/*.md`, each with its `next:` action) as ambient context; silent when there's neither.
-- **`Stop` — the calibration gate.** When a turn that edited files ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to attach its evidence or downgrade the claim. Loop-safe, fail-open on any parsing doubt, and in projects with an overlay it logs each bounce to `.fable/gate-log` — over weeks, that log is your measurement of what the harness actually caught. Self-checks: `bash hooks/test-gate.sh`.
+- **`Stop` — the calibration gate.** When the **current turn** edited files (built-in or MCP editing tools) and ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Known dark paths (mutations made via shell commands, novel completion phrasings) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
 
-Keeping `main` safe from direct pushes belongs to branch protection on your forge, which covers every client — so this plugin leaves it there. (v0.1 shipped an advisory push hook; it's removed: exercised against real payloads it stayed silent on a bare `git push` and fired on `fix/maintain-docs`, and PreToolUse offers no non-blocking channel the model can see.)
+Keeping `main` safe from direct pushes belongs to branch protection on your forge, which covers every client — so this plugin leaves it there (v0.1's advisory push hook was removed after real-payload testing showed it unreliable in both directions).
 
 ---
 

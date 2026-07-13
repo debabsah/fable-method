@@ -1,6 +1,6 @@
 ---
 name: fable-review
-description: Use before trusting or shipping an answer, design, plan, analysis, or risky code change — when you are about to commit to it. Also when the user asks for a review, a red-team, a second opinion, or to check work adversarially.
+description: Use before trusting or shipping an answer, design, plan, analysis, or risky code change — when you are about to commit to it. Also when the user asks for a review, a red-team, a second opinion, or to check work adversarially. For pure code diffs, prefer a dedicated code-review command when the environment has one; this runner covers every other artifact and needs nothing installed.
 ---
 
 # fable-review

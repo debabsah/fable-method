@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # fable-method — SessionStart hook (tiered loading, the ambient half).
-# Surfaces one line each: the project overlay's pointer (.fable/project.md) and
-# any in-flight task files (.fable/tasks/*.md) with their next action. The FULL
-# files are read only when the method triggers; this is just the always-on
-# one-liners. Best-effort, non-blocking: nothing to surface -> prints nothing.
-# Never fails the session.
+# Surfaces one line each: the project overlay's pointer (.fable/project.md),
+# any in-flight task files (.fable/tasks/*.md) with their next action and a
+# mechanical staleness stamp, and the count of undischarged residuals. The
+# FULL files are read only when the method triggers. Best-effort, non-blocking:
+# nothing to surface -> prints nothing. Never fails the session.
 set +e
-d="./.fable"
+
+# Resolve .fable/ from the git root when available (monorepo subdir sessions).
+root="$(git rev-parse --show-toplevel 2>/dev/null)"; [ -n "$root" ] || root="."
+d="$root/.fable"
 [ -d "$d" ] || exit 0
 
 f="$d/project.md"
@@ -26,6 +29,15 @@ for t in "$d"/tasks/*.md; do
   else
     tmsg="$(basename "$t" .md) — no pointer line; open the file"
   fi
-  printf 'fable-method: in-flight task (%s) — %s\n' "$t" "$tmsg"
+  # Mechanical staleness: expiry lives in the deterministic half, not in hope.
+  stale=""
+  [ -n "$(find "$t" -mtime +7 -print 2>/dev/null)" ] && stale=" [untouched >7d — resume or retire it]"
+  printf 'fable-method: in-flight task (%s) — %s%s\n' "$t" "$tmsg" "$stale"
 done
+
+r="$d/residuals.md"
+if [ -f "$r" ]; then
+  n="$(grep -cE 'Assumed:|PROVISIONAL' "$r" 2>/dev/null)"
+  [ "${n:-0}" -gt 0 ] && printf 'fable-method: %s undischarged residual(s) — .fable/residuals.md\n' "$n"
+fi
 exit 0
