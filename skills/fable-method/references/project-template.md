@@ -1,6 +1,6 @@
 # Project overlay template — `.fable/project.md`
 
-Copy this shape into `<workspace>/.fable/project.md` (git-ignored). It is the method's durable memory *for one project*: keep it **thin and pointer-first** (point to the project's own canonical docs for facts they own; never snapshot volatile values), and let it **evolve** — auto-add confirmed durable facts and gotchas, announce changes, and compact at `fable-ship`.
+Copy this shape into `<workspace>/.fable/project.md` (git-ignored). It is the method's durable memory *for one project*: keep it **thin and pointer-first** (point to the project's own canonical docs for facts they own; never snapshot volatile values), and let it **evolve** — auto-add confirmed durable facts and gotchas, announce changes, and compact when it sprawls past a page (`fable-ship` checks).
 
 **The first line MUST be a one-line HTML-comment pointer** (the SessionStart hook injects it as ambient context):
 
@@ -29,7 +29,7 @@ Then only the sections you actually have (drop the rest):
 Rules of thumb:
 - **The admission test:** an entry earns its place only if it would be false or useless in a random other project *and* can't be cheaply re-derived by exploring. Generic wisdom is the method's job; derivable facts (code maps, API shapes) rot faster than they pay rent.
 - If a fact is already in the project's `CLAUDE.md` or another canonical doc, **point to it — don't copy it.** On conflict, the canonical doc wins — fix the overlay, never fork the fact.
-- A **gotcha** = a surprise/trap you hit and diagnosed that has a learnable rule. Log it the moment you confirm it; don't wait to see whether it recurs, and if one fits no category you've seen, log it anyway.
+- A **gotcha** = a surprise/trap you hit and diagnosed that has a learnable rule — log it the moment you confirm it (full logging policy: the method skill's overlay protocol).
 - **Standing human rulings are project-level anchors.** Record them in *Conventions* with a human-ack stamp; they bind until the human lifts them — changing one is an escalation (R6), not an update.
 - An oracle row records **what pass literally prints**, not just the command — exit 0 with `3 skipped` is not the pass you meant. Note runtime when it changes strategy (`~20min` beside a slow suite) — cheapest-probe-first needs to know.
 - Stamp oracle rows and gotchas with a **last-confirmed date**; ~90 days unconfirmed → demote to *Working assumptions* until re-checked. Expire toward doubt; confident rot is worse than a gap.

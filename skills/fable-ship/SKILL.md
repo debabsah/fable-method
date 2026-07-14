@@ -11,7 +11,7 @@ The report is part of the work, not an afterthought. Ship a **calibrated** claim
 
 - **Answer first**, then the support. Lead with the verdict (done / not done / exact / blocked) in the first line; put evidence underneath, never above.
 - **Scale the report to the tier.** T1 = the verdict, its `Verified:` line(s), and the tier line — a few lines, not a document. The full shape here is for T2+.
-- **Separate verified from assumed, out loud — as the ledger.** `Verified: <claim> — ran <command> -> saw <result>` vs `Assumed: <thing> — why — how to check it`. Same tokens every report (the Stop-hook gate greps for them); never let a line from the second bucket read like the first.
+- **Separate verified from assumed, out loud — as the method's ledger** (canonical shapes: the method skill's ledger section; same tokens every report, and the Stop-hook gate greps for them). Never let an `Assumed:` line read like a `Verified:` one.
 - **Cite specifics:** paths, counts, `file:line`, the command you ran, the number you saw, before→after deltas.
 - **Report what you observed, not what you intended.** If a step was skipped or a test failed, say so with the output.
 - **Calibrate "done" with a use-boundary.** Stamp unproven results **PROVISIONAL** ("do not quote these yet") and lift it explicitly only when the check passed. Scope the claim to exactly what you measured; put the rest in a visible residual list.

@@ -3,7 +3,7 @@
 **A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.4-green.svg)](./.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.6.0-green.svg)](./.claude-plugin/plugin.json)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
 [![Plugin deps](https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg)](#self-contained-by-design)
 [![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
@@ -57,7 +57,7 @@ Each of these is one skipped check or one lost record. `fable-method` makes the 
 
 ## What it installs
 
-An **auto-triggering method skill**, **five runner skills**, **two deterministic hooks** (project memory and in-flight tasks in at SessionStart; the calibration gate out at Stop), and a **self-building per-project memory** (an overlay called `.fable/project.md`, with `.fable/tasks/` beside it for work that spans sessions) — all on Claude Code's built-in tools only. The skill and runners keep the model honest in the moment; the [per-project memory](#the-self-building-project-memory--fableprojectmd) is what makes it **get sharper with use** — it accumulates how *your* project defines "done" and where its traps are, one confirmed fact at a time.
+An **auto-triggering method skill**, **five runner skills**, a **read-only status doctor**, **two deterministic hooks** (project memory and in-flight tasks in at SessionStart; the calibration gate out at Stop), and a **self-building per-project memory** (an overlay called `.fable/project.md`, with `.fable/tasks/` beside it for work that spans sessions) — all on Claude Code's built-in tools only. The skill and runners keep the model honest in the moment; the [per-project memory](#the-self-building-project-memory--fableprojectmd) is what makes it **get sharper with use** — it accumulates how *your* project defines "done" and where its traps are, one confirmed fact at a time.
 
 The core principle: *the model's training memory, its prior rulings, a green build, and its own summaries are all **hypotheses**.* The method's whole job is to make the model **do the effortful check** — spawn an adversary, diff against an oracle (an independent source of the right answer), verify the actual claim — instead of skipping it under momentum.
 
@@ -89,7 +89,7 @@ Prefer to manage it in config? In `~/.claude/settings.json` (user-wide) or a pro
 }
 ```
 
-Once enabled, the method skill auto-triggers on task-shaped prompts; the runners and hooks are live immediately. Issues and contributions welcome at [github.com/debabsah/fable-method](https://github.com/debabsah/fable-method).
+Once enabled, the method skill auto-triggers on task-shaped prompts; the runners and hooks are live immediately. Issues and contributions welcome at [github.com/debabsah/fable-method](https://github.com/debabsah/fable-method) — maintainers and forkers, start at [MAINTAINING.md](./MAINTAINING.md).
 
 ---
 
@@ -97,7 +97,7 @@ Once enabled, the method skill auto-triggers on task-shaped prompts; the runners
 
 It's meant to be quiet — there's no banner. You'll see it on your next real task: the model pauses to **scope** the work and name what "correct" will be checked against; before it calls anything done it shows the **command it ran and the output**, not just "looks good"; when a claim is risky it **spawns blind reviewers** to attack the work; when a fix doesn't hold it runs a **hypothesis ledger** — predicted-outcome probes, cheapest first — instead of a third patch; and in a new project it **offers to create `.fable/project.md`** and tells you when it adds to it.
 
-One part you can watch directly: when a turn that edited files tries to end on a bare "done, tests passing," the **calibration gate bounces it** until the claim carries its ledger. Each live bounce is logged to `.fable/gate-log`, and `bash hooks/test-gate.sh` runs the gate's self-checks. Those are the reflexes, runners, and hooks described below.
+One part you can watch directly: when a turn that edited files tries to end on a bare "done, tests passing," the **calibration gate bounces it back once** — with instructions to attach the evidence or downgrade the claim honestly. In projects with an overlay, each live bounce is logged to `.fable/gate-log`, and `bash hooks/test-gate.sh` runs the gate's self-checks. Those are the reflexes, runners, and hooks described below.
 
 ---
 
@@ -181,6 +181,7 @@ Each effortful step has a runner. They auto-trigger, or you can invoke one by na
 | Before you trust an answer, design, or plan | **`fable-review`** | Run the deterministic checks first, then spawn blind adversaries sized to the tier — one lens at T2, a 2–5 panel at T3, aimed first at the scope's load-bearing unknowns — dedup, verify every finding against the source, triage fix-now / defer / accept, and mint the check that would have caught each fix-now class. |
 | Before you claim done, fixed, or passing | **`fable-verify`** | The evidence-before-claims gate: identify the command that would *prove* the claim → run it fresh → read the whole output → verify at the layer of the claim → *then* claim it. |
 | Shipping or handing off | **`fable-ship`** | A calibrated done-claim (answer-first, verified-vs-assumed), docs scoped to the record the change affects, and the project overlay curated on threshold. |
+| Checking what the method has been tracking | **`fable-status`** | Read-only doctor: overlay pointer and staleness, in-flight tasks, open residuals, the gate's bounce/pass tallies, shipped-vs-falsified claims. |
 
 ---
 
@@ -208,7 +209,7 @@ The reflexes keep the model honest in the moment. The overlay is where that hone
 - **`fable-ship` folds in what each task confirmed, and compacts on threshold** — dedup, retire the stale, promote the recurring when the page fills — so it stays a tight page instead of sprawling.
 - **It expires toward doubt.** Entries carry a last-confirmed date; stale ones demote to *working assumptions* until re-checked — the memory can be wrong only briefly, never confidently.
 - **In-flight work rides beside it.** Each multi-session task keeps a `.fable/tasks/<slug>.md` — its scope, anchors, decision log (`chose X over Y because Z; revisit if W`), deferrals, and a `next:` pointer the `SessionStart` hook surfaces (with a mechanical staleness stamp once it sits untouched) — opened by `fable-scope`, retired by `fable-ship`. The overlay remembers the *project*; task files remember the *work in flight*, so session 10 resumes instead of re-deriving.
-- **It keeps the score.** Beside the overlay live `.fable/claims-log` — every shipped `Verified:`, which `fable-debug` marks FALSIFIED when a vouched-for behavior later breaks — and `.fable/residuals.md`, the undischarged `Assumed:`/`PROVISIONAL` lines, surfaced at SessionStart until discharged. Over weeks, that record answers the question the ledger alone can't: whether the `Verified:` token deserves your trust.
+- **It keeps the score.** Beside the overlay live `.fable/claims-log` — every shipped `Verified:`, which `fable-debug` marks FALSIFIED when a vouched-for behavior later breaks — and `.fable/residuals.md`, the undischarged `Assumed:`/`PROVISIONAL` lines, surfaced at SessionStart until discharged. Over weeks, that record answers the question the ledger alone can't: whether the `Verified:` token deserves your trust. Read it anytime by invoking **`fable-status`**.
 
 A trimmed overlay reads like this:
 
@@ -238,7 +239,7 @@ See [`skills/fable-method/references/project-template.md`](skills/fable-method/r
 Two hooks — memory in, calibration out:
 
 - **`SessionStart`** — surfaces the current project's overlay pointer and one line per in-flight task file (`.fable/tasks/*.md`, each with its `next:` action) as ambient context; silent when there's neither.
-- **`Stop` — the calibration gate.** When the **current turn** edited files (built-in or MCP editing tools — subagent edits count) and its final message ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. The final message comes from Claude Code's supported Stop-hook field, not transcript reconstruction; a bare token with no content attached doesn't vouch; negated statements ("not done yet") don't fire it. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Known dark paths (mutations made via shell commands, novel completion phrasings) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
+- **`Stop` — the calibration gate.** When the **current turn** changed something (built-in or MCP editing tools, shell-side mutations, or a subagent dispatch — delegated work still needs its ledger) and its final message ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. The final message comes from Claude Code's supported Stop-hook field, not transcript reconstruction; a bare token with no content attached doesn't vouch; negated statements ("not done yet") don't fire it. Shell-side mutations arm it too — high-precision signatures (`sed -i`, real redirects, `tee`, git state operations) judged only on the command text of Bash tool calls, so prose that merely *mentions* them can't. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Remaining dark paths (novel completion phrasings, exotic write paths) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
 
 ### What's enforced, and by what
 

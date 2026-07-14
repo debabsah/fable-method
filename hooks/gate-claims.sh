@@ -25,7 +25,7 @@ last="$(printf '%s' "$payload" | grep -oE '"last_assistant_message": *"([^"\\]|\
 # lowercased copy — BSD sed has no case-insensitive flag — with negated claim
 # phrases stripped; the apostrophe class covers ' and multibyte ’ per byte.
 judge="$(printf '%s' "$last" | tr '[:upper:]' '[:lower:]')"
-negre="(not|never|cannot|no longer|[a-z]+n['’]+t)( (yet|be|been|being|get|fully|actually|all)){0,2} (done|finished|implemented|completed?|fixed|resolved|passing|green|shipped|ready)"
+negre="(not|never|cannot|no longer|far from|[a-z]+n['’]+t)( (yet|be|been|being|get|fully|actually|all|completely|entirely|quite|nearly|even|close to)){0,2} (done|finished|implemented|completed?|fixed|resolved|passing|green|shipped|ready)"
 judge="$(printf '%s' "$judge" | sed -E "s/$negre//g")"
 
 # ponytail: word-list predicate; the two-sided log below is its tuning data.
@@ -34,19 +34,36 @@ phrase="$(printf '%s' "$judge" | grep -oE "$claimre" | head -n 1)"
 [ -n "$phrase" ] || exit 0
 
 # Arm only if THIS turn changed something: in the transcript window after the
-# last real user message, look for built-in or MCP editing tools. Sidechain
-# (subagent) edits count — the turn still changed files. Bash-side mutations
-# are a known dark path; tune from gate-log data.
+# last real user message, look for editing tools or a subagent dispatch
+# (Task/Agent) — a subagent's own tool calls live in separate transcript
+# files this gate never reads, so the dispatch is delegated work's only
+# trace here, and its report is a claim (provenance rule). Sidechain lines
+# never mark the turn boundary.
 transcript="$(printf '%s' "$payload" | sed -n 's/.*"transcript_path": *"\([^"]*\)".*/\1/p')"
 [ -n "$transcript" ] && [ -f "$transcript" ] || exit 0
 window="$(tail -n 600 "$transcript")"
-cut="$(printf '%s\n' "$window" | grep -n '"type": *"user"' | grep -v 'tool_use_id' | tail -n 1 | cut -d: -f1)"
+cut="$(printf '%s\n' "$window" | grep -n '"type": *"user"' | grep -v 'tool_use_id' | grep -v '"isSidechain" *: *true' | tail -n 1 | cut -d: -f1)"
 if [ -n "$cut" ]; then
   seg="$(printf '%s\n' "$window" | tail -n +"$((cut + 1))")"
 else
   seg="$window"
 fi
-printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|Write|NotebookEdit|mcp__[A-Za-z0-9_]*(edit|replace|insert|write)[A-Za-z0-9_]*)"' || exit 0
+if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_]*(edit|replace|insert|write|rename|delete|create|move)[A-Za-z0-9_]*)"'; then
+  # Bash-side mutations arm too (0.6.0). Judged ONLY on the "command" values
+  # of Bash tool_use lines — text blocks and model-authored "description"
+  # fields can't arm. /dev/null redirects are stripped before matching.
+  # Signatures: sed -i/--in-place, tee, git state ops (incl. -C <path>),
+  # mv/cp/rm (word-anchored, also after a literal \n; never a --flag), and
+  # redirects to file-ish targets (>, >>, N>, &>) — excludes 2>&1, "->",
+  # "=>", and numeric comparisons (awk '$3 > 100'). Known accepted cost: a
+  # quoted '>' aimed at a word ("foo > bar") still false-arms — at worst one
+  # spurious bounce demand, since a bare claim must also be present.
+  # Fail-open bias kept; tune from gate-log.
+  cmds="$(printf '%s\n' "$seg" | grep '"name" *: *"Bash"' | grep -oE '"command": *"([^"\\]|\\.)*"' | sed -E 's/[0-9&]?>{1,2} *\/dev\/null//g')"
+  [ -n "$cmds" ] || exit 0
+  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|(mv|cp|rm) )|--in-place|[^<>&=-]>{1,2} *[A-Za-z_./~$\\]|&>{1,2} *[A-Za-z_./~$\\]'
+  printf '%s' "$cmds" | grep -qE "$bashmut" || exit 0
+fi
 
 # .fable/ resolves from the git root when available (monorepo subdir sessions).
 root="$(git rev-parse --show-toplevel 2>/dev/null)"; [ -n "$root" ] || root="."
