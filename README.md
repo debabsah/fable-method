@@ -3,7 +3,7 @@
 **A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.5.3-green.svg)](./.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-0.5.4-green.svg)](./.claude-plugin/plugin.json)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
 [![Plugin deps](https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg)](#self-contained-by-design)
 [![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
@@ -178,7 +178,7 @@ Each effortful step has a runner. They auto-trigger, or you can invoke one by na
 |-----------|--------|--------------|
 | Starting, or the scope is fuzzy | **`fable-scope`** | Define "done" as a named external check; split *known (evidence)* from *assumed (inference)*; name the 1–3 load-bearing unknowns and the cheapest probe to retire each. |
 | Something's wrong — a bug, an unexplained error, a fix that didn't hold | **`fable-debug`** | Reproduce first; state the contradiction; run a hypothesis ledger of predicted-outcome probes, cheapest first; fix the invariant, verify red→green on the exact reproduction, then root-cause *the escape* and mint the rule that would have caught it. |
-| Before you trust an answer, design, or plan | **`fable-review`** | Run the deterministic checks first, then spawn blind adversaries sized to the tier — one lens at T2, a 2–5 panel at T3 — dedup, verify every finding against the source, and triage fix-now / defer / accept. |
+| Before you trust an answer, design, or plan | **`fable-review`** | Run the deterministic checks first, then spawn blind adversaries sized to the tier — one lens at T2, a 2–5 panel at T3, aimed first at the scope's load-bearing unknowns — dedup, verify every finding against the source, triage fix-now / defer / accept, and mint the check that would have caught each fix-now class. |
 | Before you claim done, fixed, or passing | **`fable-verify`** | The evidence-before-claims gate: identify the command that would *prove* the claim → run it fresh → read the whole output → verify at the layer of the claim → *then* claim it. |
 | Shipping or handing off | **`fable-ship`** | A calibrated done-claim (answer-first, verified-vs-assumed), docs scoped to the record the change affects, and the project overlay curated on threshold. |
 

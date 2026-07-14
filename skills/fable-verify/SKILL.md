@@ -24,6 +24,7 @@ Before any success/completion claim or expression of satisfaction:
 - **Discharge residuals:** when this evidence settles an entry in `.fable/residuals.md`, mark it discharged and announce it.
 - **Categorical over enumerated:** assert a property over *all* items of a class, so the check inspects cases you didn't think to list. When it over-fires, diagnose *scope vs. substance* before loosening it.
 - **Oracle over the whole population:** when reconstructing hidden logic, diff your candidate against a readable known-good output over *every* row, not a sample; state plainly which parts are transcribed vs. inferred.
+- **No known-good output? Manufacture the oracle with a metamorphic relation:** state how the output *must change* when the input changes in a known way (add a row → the count rises by one; permute input order → the result is unchanged), then check that property. It turns hidden truth into a runnable check.
 - **Sample the tails:** first item, last item, weirdest item — not just the middle.
 - **Use evidence you didn't generate:** re-open the file you wrote, re-run, screenshot and read it, diff before/after, count what you claimed to count.
 - **Treat good news as suspect:** a pass that came too easily is unverified until you can say *why* it's real. Distinguish "the build succeeded" (rehearsal) from "the thing loaded and ran" (reality).

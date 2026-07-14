@@ -1,6 +1,6 @@
 {
   "name": "fable-method",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Installs 'The Fable Way' working discipline, built for Opus 4.8 at medium-xhigh effort: an auto-triggering method skill (reflexes, risk tiers, plan shape, a calibrated-code stance) plus runner skills (scope, debug, adversarial review, verify, ship) that spawn plain general-purpose subagents; a deterministic Stop-hook calibration gate that bounces completion claims lacking a Verified/Assumed/PROVISIONAL evidence ledger; and a per-workspace git-ignored .fable/ state dir — project.md overlay (acceptance-oracle table with expected outputs, conventions, gotchas, expiry-toward-doubt) plus tasks/ files that carry multi-session work across sessions and a calibration record (claims log, residuals register, two-sided gate log). No dependency on any other plugin or skill. Distilled from a forensic study of the Fable model.",
   "author": { "name": "debabsah" },
   "license": "MIT",
