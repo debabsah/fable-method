@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 486" role="img" aria-labelledby="heroTitle heroDesc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace">
+  <title id="heroTitle">fable-method — a working discipline for Claude Code</title>
+  <desc id="heroDesc">A turn that edited files tries to end on the bare claim "Done — tests passing." The Stop calibration gate blocks it once with exit 2, reporting that the turn ends on a completion claim with no evidence attached, and sends it back to run the proving command or downgrade the claim. The claim returns calibrated: Verified: gate suite green — ran bash hooks/test-gate.sh -&gt; saw "all checks pass".</desc>
+
+  <defs>
+    <linearGradient id="gateGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9A441" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#D9A441" stop-opacity="0.02"/>
+    </linearGradient>
+  </defs>
+
+  <!-- board -->
+  <rect x="0" y="0" width="1200" height="486" rx="10" fill="#0B0E11"/>
+  <rect x="0.5" y="0.5" width="1199" height="485" rx="9.5" fill="none" stroke="#2A3038"/>
+
+  <!-- ── identity band ───────────────────────────────────────── -->
+  <text x="56" y="52" font-size="11" letter-spacing="1.7" fill="#7D8894">CLAUDE CODE PLUGIN · SELF-CONTAINED</text>
+
+  <text x="56" y="104" font-size="42" font-weight="700" fill="#F2F0EC"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">fable-method</text>
+
+  <text x="56" y="140" font-size="16.5" fill="#B6C0CC"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Nothing is true until an independent check you did not author says so.</text>
+
+  <text x="1144" y="52" font-size="11" letter-spacing="1.2" fill="#7D8894" text-anchor="end">v0.6.0 · MIT</text>
+  <text x="1144" y="72" font-size="11" letter-spacing="1.2" fill="#57616D" text-anchor="end">NO PLUGIN DEPENDENCIES</text>
+
+  <line x1="56" y1="172" x2="1144" y2="172" stroke="#2A3038"/>
+
+  <!-- ── the sequence ────────────────────────────────────────── -->
+  <text x="56" y="206" font-size="10.5" letter-spacing="1.5" fill="#57616D">A TURN THAT EDITED FILES TRIES TO END</text>
+
+  <!-- spine -->
+  <line x1="64" y1="243" x2="64" y2="436" stroke="#2A3038" stroke-width="1.5"/>
+
+  <!-- 1 · the bare claim — hollow marker: nothing vouches for it -->
+  <circle cx="64" cy="243" r="4.5" fill="#0B0E11" stroke="#59636F" stroke-width="1.5"/>
+  <text x="92" y="248" font-size="16" fill="#7D8894">Done — tests passing.</text>
+  <text x="1144" y="248" font-size="10.5" letter-spacing="1" fill="#57616D" text-anchor="end">UNLABELED CLAIM</text>
+
+  <!-- 2 · the gate — the one moment of colour -->
+  <circle cx="64" cy="330" r="4.5" fill="#D9A441"/>
+  <rect x="92" y="290" width="1052" height="80" rx="6" fill="url(#gateGlow)" stroke="#5C4A22"/>
+  <rect x="92" y="290" width="3" height="80" fill="#D9A441"/>
+  <text x="116" y="318" font-size="13" font-weight="600" letter-spacing="0.4" fill="#D9A441">Stop · calibration gate</text>
+  <text x="1120" y="318" font-size="11" letter-spacing="1" fill="#B0863A" text-anchor="end">BLOCKED ONCE · EXIT 2</text>
+  <text x="116" y="347" font-size="14.5" fill="#C6CEDA">this turn ends on a completion claim with no evidence attached</text>
+
+  <text x="92" y="404" font-size="10.5" letter-spacing="1" fill="#57616D">SENT BACK TO RUN THE PROVING COMMAND NOW — OR DOWNGRADE THE CLAIM HONESTLY</text>
+
+  <!-- 3 · the calibrated claim — filled marker + solid rule: the motif -->
+  <circle cx="64" cy="436" r="4.5" fill="#57A773"/>
+  <text x="92" y="441" font-size="16" fill="#D5DDE6"><tspan fill="#57A773" font-weight="700">Verified:</tspan> gate suite green — ran <tspan fill="#F2F0EC">bash hooks/test-gate.sh</tspan> -&gt; saw <tspan fill="#F2F0EC">"all checks pass"</tspan></text>
+  <line x1="92" y1="453" x2="932" y2="453" stroke="#57A773" stroke-width="1.5"/>
+</svg>

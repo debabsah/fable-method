@@ -1,16 +1,25 @@
-# fable-method
+<p align="center">
+  <img src="assets/readme/hero.svg" width="100%" alt="fable-method — a working discipline for Claude Code, where nothing is true until an independent check you did not author says so. A turn that edited files tries to end on the bare claim 'Done — tests passing.' The Stop calibration gate blocks it once with exit 2 and sends it back to run the proving command now, or downgrade the claim honestly. The claim returns calibrated: 'Verified: gate suite green — ran bash hooks/test-gate.sh and saw all checks pass.'">
+</p>
 
-**A working discipline for Claude Code — where nothing is true until an independent check you did not author says so.**
+<p align="center">
+  <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <a href="./.claude-plugin/plugin.json"><img alt="Version 0.6.0" src="https://img.shields.io/badge/version-0.6.0-green.svg"></a>
+  <a href="https://docs.claude.com/en/docs/claude-code"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg"></a>
+  <a href="#self-contained-by-design"><img alt="Plugin dependencies: none" src="https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg"></a>
+  <a href="#requirements"><img alt="Target: Opus 4.8" src="https://img.shields.io/badge/target-Opus%204.8-orange.svg"></a>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.0-green.svg)](./.claude-plugin/plugin.json)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://docs.claude.com/en/docs/claude-code)
-[![Plugin deps](https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg)](#self-contained-by-design)
-[![Target](https://img.shields.io/badge/target-Opus%204.8-orange.svg)](#requirements)
+`fable-method` is a self-contained Claude Code plugin for developers doing real engineering work with Claude. It installs a set of **gates** — checks the model runs at each step — so it stops skipping the effortful ones under momentum:
 
-`fable-method` is a self-contained Claude Code plugin for developers doing real engineering work with Claude. It installs a set of **gates** — checks the model runs at each step — so it stops skipping the effortful ones under momentum: scope the work before building, ground assumptions before designing, get a blind adversary to attack the work before trusting it, check the actual claim (not just a green build that implies it) before declaring "done," diagnose by designed experiment — not patch-and-pray — when something breaks, and report what's verified apart from what's assumed.
+- Scope the work before building, and name what "correct" will be checked against.
+- Ground assumptions in the file, dataset, or API response before designing on them.
+- Get a blind adversary to attack the work before trusting it.
+- Check the actual claim before declaring "done" — not a green build that merely implies it.
+- Diagnose by designed experiment when something breaks, instead of patch-and-pray.
+- Report what's verified apart from what's assumed.
 
-The claim moment gets a **deterministic backstop**: a Stop hook bounces completion claims that arrive without their ledger — detection is a tuned word-list, so it's heuristic in what it catches and mechanical in how it responds. "Done" arrives as `Verified: <what> — ran <command> -> saw <result>`, or an honest `Assumed:`/`PROVISIONAL`. You act on the report by reading one short list — what it says it couldn't check — instead of re-deriving the work.
+The claim moment gets a **deterministic backstop**: a Stop hook bounces a completion claim — once — when the turn changed files and the claim carries no ledger. Detection is a maintained phrase-list, so it's heuristic in what it catches and mechanical in how it responds. "Done" arrives as `Verified: <what> — ran <command> -> saw <result>`, or an honest `Assumed:`/`PROVISIONAL`. You act on the report by reading one short list — what it says it couldn't check — instead of re-deriving the work.
 
 Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-5` model — actually worked. ([Where it came from](#where-it-came-from).)
 
@@ -18,7 +27,8 @@ Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-
 
 ---
 
-## Contents
+<details>
+<summary><b>Contents</b></summary>
 
 - [The problem](#the-problem)
 - [What it installs](#what-it-installs)
@@ -37,6 +47,8 @@ Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-
 - [Getting the best results](#getting-the-best-results)
 - [Requirements](#requirements)
 - [License](#license)
+
+</details>
 
 ---
 
@@ -62,7 +74,7 @@ An **auto-triggering method skill**, **five runner skills**, a **read-only statu
 The core principle: *the model's training memory, its prior rulings, a green build, and its own summaries are all **hypotheses**.* The method's whole job is to make the model **do the effortful check** — spawn an adversary, diff against an oracle (an independent source of the right answer), verify the actual claim — instead of skipping it under momentum.
 
 <a name="self-contained-by-design"></a>
-**Self-contained by design.** No runtime dependency on any other plugin or skill. When a runner needs backup — the adversarial review — it spawns plain **general-purpose subagents** with inline prompts; nothing else is required. Install it and it runs — everything here is Bash, git, and Claude Code's built-ins. This mirrors how Fable itself worked: it embodied the discipline and dispatched its own adversaries rather than composing other people's tools.
+**Self-contained by design.** No runtime dependency on any other plugin or skill. When a runner needs backup — the adversarial review — it dispatches **`fable-lens`**, a reviewer agent shipped in this repo whose toolset is a harness-enforced allowlist (`Read, Grep, Glob`): it cannot edit the artifact it reviews, and cannot spawn subagents of its own. Nothing else is required — everything here is Bash, git, Claude Code's built-ins, and that one agent. This mirrors how Fable itself worked: it embodied the discipline and dispatched its own adversaries rather than composing other people's tools.
 
 ---
 
@@ -144,13 +156,9 @@ Work that spans sessions checkpoints the loop: `.fable/tasks/<slug>.md` records 
 
 The method's visible surface: every completion claim carries the same three tokens, so you read one shape — this week and next year.
 
-```text
-Verified: <claim> — ran <command/observation> -> saw <result>
-Assumed: <what it couldn't check> — why — how you can check it
-PROVISIONAL: <number/result not yet safe to quote>
-```
+<img src="assets/readme/ledger.svg" width="100%" alt="The three ledger tokens the Stop hook greps for. Verified: the claim, then 'ran command/observation, saw result' — evidence is attached, this is what you can act on today. Assumed: what it couldn't check, why, and how you can check it — the short honest list you read before you ship. PROVISIONAL: a number or result not yet safe to quote — labeled, not hidden.">
 
-The Stop hook greps for exactly these tokens: a done-claim with none of them — or with a bare token carrying no content — gets bounced back once, to attach its evidence or downgrade itself. The gate enforces the format of honesty; the skills carry the substance. And a report from any agent — including subagents the model spawned — counts as a claim, not evidence, until it's checked against the source (the **provenance rule**).
+The Stop hook greps for exactly these tokens: a done-claim carrying none of them gets bounced back once, to attach its evidence or downgrade itself. A bare `Verified:`/`Assumed:` with nothing after it doesn't vouch either — though a bare `PROVISIONAL` is legal, since it downgrades the result rather than claiming anything. The gate enforces the format of honesty; the skills carry the substance. And a report from any agent — including subagents the model spawned — counts as a claim, not evidence, until it's checked against the source (the **provenance rule**).
 
 ---
 
@@ -211,18 +219,10 @@ The reflexes keep the model honest in the moment. The overlay is where that hone
 - **In-flight work rides beside it.** Each multi-session task keeps a `.fable/tasks/<slug>.md` — its scope, anchors, decision log (`chose X over Y because Z; revisit if W`), deferrals, and a `next:` pointer the `SessionStart` hook surfaces (with a mechanical staleness stamp once it sits untouched) — opened by `fable-scope`, retired by `fable-ship`. The overlay remembers the *project*; task files remember the *work in flight*, so session 10 resumes instead of re-deriving.
 - **It keeps the score.** Beside the overlay live `.fable/claims-log` — every shipped `Verified:`, which `fable-debug` marks FALSIFIED when a vouched-for behavior later breaks — and `.fable/residuals.md`, the undischarged `Assumed:`/`PROVISIONAL` lines, surfaced at SessionStart until discharged. Over weeks, that record answers the question the ledger alone can't: whether the `Verified:` token deserves your trust. Read it anytime by invoking **`fable-status`**.
 
-A trimmed overlay reads like this:
+This plugin's own overlay, at session 1 and at session 10 — the right-hand column is real content from this repository's own `.fable/project.md`, the oracle row and each gotcha appended by the session that confirmed them; the left is the same file before its first confirmed fact:
 
-```markdown
-<!-- pointer: acme-api — oracle: contract tests in tests/contract/ must pass. Canonical: CLAUDE.md. Full: .fable/project.md -->
+<img src="assets/readme/overlay.svg" width="100%" alt="A before-and-after of this repository's .fable/project.md overlay, the two columns labeled session 1 and session 10. Session 1: the acceptance-oracle section is empty and the skill offers to bootstrap it by asking what the acceptance oracle is here; the gotchas log has nothing in it; new work is scoped from zero. Session 10: the oracle row reads 'gate logic, bash hooks/test-gate.sh, pass prints all checks pass (91)'; the gotchas log carries 'a fixture can be green fiction — verify a transcript shape against reality first' and 'BSD sed has no case-insensitive flag — lowercase once, match lowercase'; new work is scoped on top of what is already known. One pointer line is surfaced at every SessionStart; the full file is read only when the method triggers.">
 
-## Acceptance oracle(s)
-- "Correct" = `make contract-test` green across ALL endpoints (not a sampled subset) — pass prints `24/24 contracts OK`.
-
-## Gotchas (log every trap)
-- migrations pass locally, fail in CI → CI seeds a fresh DB, local reuses one
-  → always test against a fresh DB (`make db-reset` first).
-```
 
 **Why it lives in the workspace, git-ignored:**
 
@@ -239,7 +239,7 @@ See [`skills/fable-method/references/project-template.md`](skills/fable-method/r
 Two hooks — memory in, calibration out:
 
 - **`SessionStart`** — surfaces the current project's overlay pointer and one line per in-flight task file (`.fable/tasks/*.md`, each with its `next:` action) as ambient context; silent when there's neither.
-- **`Stop` — the calibration gate.** When the **current turn** changed something (built-in or MCP editing tools, shell-side mutations, or a subagent dispatch — delegated work still needs its ledger) and its final message ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. The final message comes from Claude Code's supported Stop-hook field, not transcript reconstruction; a bare token with no content attached doesn't vouch; negated statements ("not done yet") don't fire it. Shell-side mutations arm it too — high-precision signatures (`sed -i`, real redirects, `tee`, git state operations) judged only on the command text of Bash tool calls, so prose that merely *mentions* them can't. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Remaining dark paths (novel completion phrasings, exotic write paths) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
+- **`Stop` — the calibration gate.** When the **current turn** changed something (built-in or MCP editing tools, shell-side mutations, or a subagent dispatch — delegated work still needs its ledger) and its final message ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. The final message comes from Claude Code's supported Stop-hook field, not transcript reconstruction; a bare `Verified:`/`Assumed:` with no content attached doesn't vouch (a bare `PROVISIONAL` is legal — it downgrades the result rather than claiming anything); negated statements ("not done yet") don't fire it. Read "completion claim" literally: it means *a phrase on a maintained list*, so an unlisted phrasing passes ungated — and the block is one reminder per turn, not a wall, since a restated claim passes on the next stop (a trapped session is the worse failure). Shell-side mutations arm it too — high-precision signatures (`sed -i`, real redirects, `tee`, git state operations, `curl -o`, `wget`, `dd`, a write-mode `open()`) judged only on the command text of Bash tool calls, so prose that merely *mentions* them can't. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Remaining dark paths (novel completion phrasings, exotic write paths) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
 
 ### What's enforced, and by what
 

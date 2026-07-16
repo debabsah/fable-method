@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 348" role="img" aria-labelledby="ledgerTitle ledgerDesc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace">
+  <title id="ledgerTitle">The ledger — one shape for every claim</title>
+  <desc id="ledgerDesc">Three tokens the Stop hook greps for. Verified: &lt;claim&gt; — ran &lt;command/observation&gt; -&gt; saw &lt;result&gt; — evidence is attached, act on it. Assumed: &lt;what it couldn't check&gt; — why — how you can check it — the short list you read before you ship. PROVISIONAL: &lt;number/result not yet safe to quote&gt; — carries no number you can quote yet.</desc>
+
+  <rect x="0" y="0" width="1200" height="348" rx="10" fill="#0B0E11"/>
+  <rect x="0.5" y="0.5" width="1199" height="347" rx="9.5" fill="none" stroke="#2A3038"/>
+
+  <text x="56" y="42" font-size="10.5" letter-spacing="1.5" fill="#7D8894">THE LEDGER · ONE SHAPE FOR EVERY CLAIM</text>
+  <text x="1144" y="42" font-size="10.5" letter-spacing="1.2" fill="#57616D" text-anchor="end">THE STOP HOOK GREPS FOR EXACTLY THESE THREE</text>
+  <line x1="56" y1="62" x2="1144" y2="62" stroke="#2A3038"/>
+
+  <!-- 1 · Verified — filled marker, solid rule -->
+  <circle cx="64" cy="106" r="5" fill="#57A773"/>
+  <text x="96" y="111" font-size="16" fill="#D5DDE6"><tspan fill="#57A773" font-weight="700">Verified:</tspan> &lt;claim&gt; — ran &lt;command/observation&gt; -&gt; saw &lt;result&gt;</text>
+  <line x1="96" y1="124" x2="682" y2="124" stroke="#57A773" stroke-width="1.5"/>
+  <text x="96" y="146" font-size="13" fill="#7D8894">evidence is attached — this is what you can act on today</text>
+
+  <!-- 2 · Assumed — half marker, dashed rule -->
+  <circle cx="64" cy="190" r="5" fill="none" stroke="#C08A3E" stroke-width="1.5"/>
+  <path d="M64 185 A5 5 0 0 1 64 195 Z" fill="#C08A3E"/>
+  <text x="96" y="195" font-size="16" fill="#D5DDE6"><tspan fill="#C08A3E" font-weight="700">Assumed:</tspan> &lt;what it couldn't check&gt; — why — how you can check it</text>
+  <line x1="96" y1="208" x2="691" y2="208" stroke="#C08A3E" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="96" y="230" font-size="13" fill="#7D8894">the short honest list you read before you ship</text>
+
+  <!-- 3 · PROVISIONAL — hollow marker, dotted rule -->
+  <circle cx="64" cy="274" r="5" fill="none" stroke="#59636F" stroke-width="1.5"/>
+  <text x="96" y="279" font-size="16" fill="#D5DDE6"><tspan fill="#8B96A3" font-weight="700">PROVISIONAL:</tspan> &lt;number/result not yet safe to quote&gt;</text>
+  <line x1="96" y1="292" x2="566" y2="292" stroke="#59636F" stroke-width="1.5" stroke-dasharray="1.5 5" stroke-linecap="round"/>
+  <text x="96" y="314" font-size="13" fill="#7D8894">a number that is not yet safe to quote — labeled, not hidden</text>
+</svg>

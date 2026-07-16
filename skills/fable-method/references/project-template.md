@@ -35,4 +35,7 @@ Rules of thumb:
 - Stamp oracle rows and gotchas with a **last-confirmed date**; ~90 days unconfirmed → demote to *Working assumptions* until re-checked. Expire toward doubt; confident rot is worse than a gap.
 - The Stop-hook gate writes `.fable/gate-log` beside this file; recurring bounces are a gotcha about working habits — log them like any other trap.
 - **In-flight tasks** live beside this file too: one `.fable/tasks/<slug>.md` per multi-session task, first line `<!-- task: <slug> — next: <action> -->` (the SessionStart hook surfaces it every session). Opened by fable-scope; a decision record appended at each re-decide; retired by fable-ship — promote the durables, delete the file.
+- **`.fable/residuals.md` has a grammar, because two counters parse it.** One `- ` bullet per open obligation:
+  `- <date> (<version>) Assumed: <what couldn't be checked> — why — discharge: <what would settle it>`
+  (or `PROVISIONAL:` in place of `Assumed:`). The SessionStart hook and `fable-status` count **bullet lines carrying a token** — so the file's header may name the tokens freely, and prose that merely *mentions* one is not an obligation. Write an open residual as a bullet or it will not be counted.
 - Keep it to roughly a page. When it sprawls, that's the signal to compact (dedup, retire stale, point instead of inline).

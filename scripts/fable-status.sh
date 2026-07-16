@@ -5,7 +5,13 @@
 # Run from anywhere in the project: bash scripts/fable-status.sh
 set +e
 
-root="$(git rev-parse --show-toplevel 2>/dev/null)"; [ -n "$root" ] || root="."
+# .fable/ resolves from the git root. With no git root at all the record binds to
+# the cwd, so two sessions started in different directories quietly keep two
+# half-records that each read as complete. Can't fix that here without changing
+# where the hooks look — but a fallback that announces itself beats one that
+# doesn't, so report the absolute path and name the risk (0.6.1).
+root="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -n "$root" ]; then nogit=""; else root="$(pwd)"; nogit="  [no git root — this record is bound to this cwd; a session started elsewhere reads a different .fable/]"; fi
 f="$root/.fable"
 
 if [ ! -d "$f" ]; then
@@ -13,7 +19,7 @@ if [ ! -d "$f" ]; then
   exit 0
 fi
 
-echo "fable-status — $root/.fable"
+echo "fable-status — $root/.fable$nogit"
 
 # Overlay: pointer, oracle rows, stale rows (last-confirmed date > ~90 days old).
 if [ -f "$f/project.md" ]; then
@@ -42,9 +48,13 @@ if [ -d "$f/tasks" ]; then
 fi
 echo "in-flight tasks: $tasks (untouched >7d: $stale_tasks)"
 
-# Residuals: undischarged Assumed:/PROVISIONAL lines.
+# Residuals: undischarged obligations. Count POSITIVELY against the residual
+# grammar (project-template.md: one `- ` bullet per obligation) — not "any line
+# with the words", which counted the file's own header (+1 forever, 0.6.1) and
+# any prose mentioning a token. Same rule the gate-log tallies below follow.
+# Keep this identical to hooks/inject-project-pointer.sh (R2: both callers).
 if [ -f "$f/residuals.md" ]; then
-  res=$(grep -cE 'Assumed:|PROVISIONAL' "$f/residuals.md" 2>/dev/null)
+  res=$(grep -cE '^[[:space:]]*[-*][[:space:]].*(Assumed:|PROVISIONAL)' "$f/residuals.md" 2>/dev/null)
 else
   res=0
 fi
@@ -57,17 +67,25 @@ if [ -f "$f/gate-log" ]; then
   bounces=$(grep -c ' BOUNCE phrase=' "$f/gate-log" 2>/dev/null)
   passes=$(grep -c ' PASS phrase=' "$f/gate-log" 2>/dev/null)
   lastb="$(grep ' BOUNCE phrase=' "$f/gate-log" | tail -n 1 | cut -c1-100)"
-  echo "gate: $bounces bounces / $passes armed passes"
+  echo "gate: $bounces bounces / $passes armed passes (the log self-rotates at 200 lines, so this is the recent window once it matures — not a lifetime total)"
   [ -n "$lastb" ] && echo "  last bounce: $lastb"
 else
   echo "gate: no log yet (appears on the first armed pass or bounce in an overlay project)"
 fi
 
-# Claims log: the trust record fable-debug falsifies against.
-if [ -f "$f/claims-log" ]; then
+# Claims log: the trust record fable-debug falsifies against. Read the archives
+# too (`claims-log.<year>`, per fable-ship) — a record that silently answers for
+# this year only would read as "we have barely vouched for anything" every
+# January, which is the trust question inverted. R2: every caller of the archive
+# rule must know the archive exists.
+set -- "$f"/claims-log "$f"/claims-log.*
+logs=""; for c in "$@"; do [ -f "$c" ] && logs="$logs $c"; done
+if [ -n "$logs" ]; then
   # A FALSIFIED line quotes its original Verified: text — count it once, as falsified.
-  claims=$(grep 'Verified:' "$f/claims-log" 2>/dev/null | grep -vc 'FALSIFIED')
-  falsified=$(grep -c 'FALSIFIED' "$f/claims-log" 2>/dev/null)
+  # shellcheck disable=SC2086
+  claims=$(cat $logs 2>/dev/null | grep 'Verified:' | grep -vc 'FALSIFIED')
+  # shellcheck disable=SC2086
+  falsified=$(cat $logs 2>/dev/null | grep -c 'FALSIFIED')
   echo "claims: $claims shipped Verified: lines, $falsified falsified"
 else
   echo "claims: no log yet (fable-ship appends shipped Verified: lines)"
