@@ -33,6 +33,16 @@ last="$(printf '%s' "$payload" | grep -oE '"last_assistant_message": *"([^"\\]|\
 # unaffected either way, since the prefix carries none of their tokens.
 last="$(printf '%s' "$last" | sed -E 's/^"last_assistant_message": *"//; s/"$//')"
 
+# The field arrives JSON-ENCODED, and until 0.7.0 nothing decoded it. A newline
+# is therefore a literal backslash followed by `n`, so a claim that begins its
+# own line — the single most common shape of a real final message — had a WORD
+# CHARACTER in front of it and `claimre`'s leading \b never matched.
+# "Refactored the parser.\nDone." walked straight through. The mirror held too:
+# a hedge split across lines could not be stripped by the negation pass (the
+# filler class cannot match a backslash), so honest text bounced. Both
+# directions were invisible because every fixture in the suite was one line.
+last="$(printf '%s' "$last" | sed -E 's/\\[nrt]/ /g; s/\\"/"/g')"
+
 # Negated statements are not claims ("not done yet" must not bounce). Judge a
 # lowercased copy — BSD sed has no case-insensitive flag — with negated claim
 # phrases stripped; the apostrophe class covers ' and multibyte ’ per byte.
@@ -50,6 +60,10 @@ last="$(printf '%s' "$last" | sed -E 's/^"last_assistant_message": *"//; s/"$//'
 # being honest carries one — "I don't THINK the tests pass", "I can't CONFIRM
 # the migration succeeded", "no EVIDENCE that the build passes" — and all seven
 # sampled phrasings bounced at 0.6.1, including a plain "Nothing is fixed yet."
+# Six are pinned as non-firing; the seventh (a bare "I doubt this is done") is
+# pinned as an accepted bounce, since `doubt` cost more as a negator than it
+# bought. `\b` is used freely by `claimre` below because that is `grep -E`,
+# which honours it on both platforms; only `sed` is the portability trap.
 #
 # The gap is applied NEAREST-STEM-FIRST, and that ordering is the whole
 # correctness argument. A single pattern with `{0,4}` is matched leftmost-
@@ -74,7 +88,21 @@ judge="$(printf '%s' "$last" | tr '[:upper:]' '[:lower:]')"
 # report carrying no negator at all ("12 of 40 tests passed") is out of reach of
 # a negation rule and stays a known bounce.
 negre="(no evidence|no longer|nothing|none( of)?|not|never|cannot|unclear|unsure|far from|[a-z]+n['’]+t)"
-negstem="(done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live)"
+# Every stem `claimre` carries must appear here — including the two multi-word
+# ones. `good to go` and `works now` were absent for three releases, so the two
+# most deflated status reports in the vocabulary ("Nothing works now.") bounced.
+negstem="(done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live|good to go|works now)"
+# Clause conjunctions become hard barriers before the strip runs, because the
+# nearest-first ordering only protects the sentence when the negator's OWN stem
+# sits at gap 0. When the negated word is not a stem — "isn't PERFECT but the
+# tests pass" — the widest expression reaches across the clause and deletes the
+# claim instead, and that failure is anti-correlated with candour: the more
+# hedging preamble a message carries, the likelier its claim is erased. `doubt`
+# is a barrier for the same reason it is not a negator ("no longer any doubt
+# the migration succeeded" reached over it one synonym away). The filler class
+# already cannot cross `.` or `;`, so promoting these words to `.` is the same
+# mechanism, applied to the boundaries punctuation does not mark.
+judge="$(printf '%s' "$judge" | sed -E 's/ (but|and|however|although|though|whereas|otherwise|doubt) / . /g')"
 # Every stem carries an explicit trailing delimiter, and the match is replaced
 # by a space rather than deleted. Without it `completed?` matches the PREFIX of
 # "completely", so the nearest-first pass strips "not complete" and leaves "ly
@@ -153,8 +181,11 @@ fi
 # were tried and removed, because `list_commits`, `list_deployments`,
 # `execute_query` and `dispatch_*` all armed on a plural noun. The miss that
 # buys (a genuine `execute_sql` write) is in the fail-open direction; arming
-# every database read is not.
-if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_]*(edit|replace|insert|write|rename|delete|create|move|send|save|publish|upload|merge|append|remove|destroy)[A-Za-z0-9_]*)"'; then
+# every database read is not. The name class carries `-`: a hyphen is legal in
+# an MCP server's config key, and excluding it failed the branch END TO END for
+# every hyphenated server (`mcp__github-mcp__create_pull_request`) — a hole in
+# the character class, not the verb list every comment here argued about.
+if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_-]*(edit|replace|insert|write|rename|delete|create|move|send|save|publish|upload|merge|append|remove|destroy)[A-Za-z0-9_-]*)"'; then
   # Bash-side mutations arm too (0.6.0). Judged ONLY on the "command" values
   # of Bash tool_use lines — text blocks and model-authored "description"
   # fields can't arm. /dev/null redirects are stripped before matching.
@@ -165,7 +196,7 @@ if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|Notebook
   # quoted '>' aimed at a word ("foo > bar") still false-arms — at worst one
   # spurious bounce demand, since a bare claim must also be present.
   # Fail-open bias kept; tune from gate-log.
-  cmds="$(printf '%s\n' "$seg" | grep '"name" *: *"Bash"' | grep -oE '"command": *"([^"\\]|\\.)*"' | sed -E 's/[0-9&]?>{1,2} *\/dev\/null//g')"
+  cmds="$(printf '%s\n' "$seg" | grep '"name" *: *"Bash"' | grep -oE '"command" *: *"([^"\\]|\\.)*"' | sed -E 's/[0-9&]?>{1,2} *\/dev\/null//g')"
   [ -n "$cmds" ] || exit 0
   # 0.6.1 added write paths that leave no >, no sed -i and no git: curl -o/-O,
   # wget, dd, truncate, chmod/chown, ln -s, and a write-mode open() (the model's
@@ -183,7 +214,15 @@ if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|Notebook
   # counting-environment probe and would otherwise arm the turn that proves a
   # claim. `touch`/`rmdir`/`mkdir` join the word-anchored group for the same
   # reason `mv`/`cp` are in it.
-  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|gh +(pr|release|issue|repo|gist|secret|workflow) +(create|merge|edit|comment|close|reopen|ready|delete|upload|run|set)|(npm|pnpm|yarn) +publish|terraform +(apply|destroy|import)|kubectl +(apply|create|delete|patch|replace|scale)|docker +(push|rmi)|(mv|cp|rm|dd|touch|rmdir|mkdir|truncate|chmod|wget) )|--in-place|curl [^|]*(-[oO]\b|--output|--remote-name)|ln +-[a-zA-Z]*s|open\([^)]*,.{0,2}[wa][b+]?.{0,2}\)|[^<>&=-]>{1,2} *[A-Za-z_./~$\\]|&>{1,2} *[A-Za-z_./~$\\]'
+  # Spelling variants matter as much as the verb list: `sed -E -i` puts the -i
+  # in a LATER flag cluster, `curl -sLo` combines it into one, and a redirect
+  # target may start with digits (`> 2026-run.log`) — all missed while the
+  # fixture for each pinned the single spelling the pattern was written from.
+  # The digit prefix still requires a non-digit after it, so `awk '$3 > 100'`
+  # stays guarded. Accepted false arm, widened from the 0.6.0 note: a quoted
+  # MUTATION VERB also arms (`grep -rn "rm -rf" scripts/`), not just a quoted
+  # `>`, because the char before it is the quote. One bounce, priced.
+  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +(-[a-zA-Z]+ +)*-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|gh +(pr|release|issue|repo|gist|secret|workflow) +(create|merge|edit|comment|close|reopen|ready|delete|upload|run|set)|(npm|pnpm|yarn) +publish|terraform +(apply|destroy|import)|kubectl +(apply|create|delete|patch|replace|scale)|docker +(push|rmi)|(mv|cp|rm|dd|touch|rmdir|mkdir|truncate|chmod|chown|wget) )|--in-place|curl [^|]*(-[a-zA-Z]*[oO]\b|--output|--remote-name)|ln +-[a-zA-Z]*s|open\([^)]*,.{0,2}[wa][b+]?.{0,2}\)|[^<>&=-]>{1,2} *[0-9]*[A-Za-z_./~$\\-]|&>{1,2} *[0-9]*[A-Za-z_./~$\\-]'
   printf '%s' "$cmds" | grep -qE "$bashmut" || exit 0
 fi
 

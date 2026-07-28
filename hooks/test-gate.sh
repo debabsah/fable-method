@@ -226,7 +226,11 @@ check "'The feature is live.' gates"          2 "$(run false "The feature is liv
 check "'not deployed yet' does not fire"      0 "$(run false "This is not deployed yet.")"
 check "'has not been merged' does not fire"   0 "$(run false "The PR has not been merged.")"
 check "'not pushed' does not fire"            0 "$(run false "The branch is not pushed.")"
-check "'not live yet' does not fire"          0 "$(run false "The feature is not live yet.")"
+# Tautology, kept as documentation and labelled as one: `claimre` requires the
+# copula (`is|are|now live`), so "is not live" cannot match it whether or not a
+# negation pass exists. Deleting negre entirely leaves this green. It records
+# the intent; the `live` stem in negstem is what actually carries the case.
+check "'not live yet' cannot fire (tautology)" 0 "$(run false "The feature is not live yet.")"
 # ...and the prose guard: `live` is a common word, so only a copula form counts.
 check "'the fixtures live in tests/' does not fire" 0 "$(run false "The fixtures live in tests/fixtures and are read at import time.")"
 
@@ -261,6 +265,34 @@ check "'no doubt ... succeeded' is a claim"               2 "$(run false "There 
 check "'the unverified path is fixed' is a claim"         2 "$(run false "The unverified path is fixed.")"
 check "bare 'I doubt this is done' bounces (accepted)"    2 "$(run false "I doubt this is done.")"
 check "'None of the tests pass' does not fire"            0 "$(run false "None of the tests pass.")"
+
+# ── 0.7.0 RC, second blind lens (mechanical) ───────────────────────────────
+# The nearest-first ordering only protects the sentence when the negator's OWN
+# stem sits at gap 0. When the negated word is not a stem at all, the widest
+# expression reaches across the clause boundary and eats the claim instead —
+# and the failure is anti-correlated with candour, since the more hedging
+# preamble the message carries, the likelier the claim is erased. Clause
+# conjunctions are now hard barriers the gap cannot cross.
+check "gap does not cross 'but' to eat a claim"      2 "$(run false "The code isn't perfect but the tests pass.")"
+check "gap does not cross 'but' (certain/fixed)"     2 "$(run false "I'm not certain but everything is fixed.")"
+check "gap does not cross 'and' to eat a claim"      2 "$(run false "This is no longer broken and the tests pass.")"
+# `doubt` was removed as a NEGATOR for exactly this reason, then `no longer`
+# reached over it and re-opened the same hole one synonym away.
+check "'no longer any doubt ... succeeded' is a claim" 2 "$(run false "There is no longer any doubt the migration succeeded.")"
+# The invariant said every claimre stem appears in the negation group. Two never
+# did — `good to go` and `works now` — so the two most deflated status reports
+# in the vocabulary bounced, which is the direction the file calls worse.
+check "'Nothing works now.' does not fire"           0 "$(run false "Nothing works now.")"
+check "'not good to go yet' does not fire"           0 "$(run false "This is not good to go yet.")"
+# last_assistant_message arrives JSON-ENCODED. A newline is a literal backslash
+# and an `n`, so a claim beginning its own line had a word character in front of
+# it and `claimre`'s \b never matched: the single most common shape of a real
+# final message walked through the gate. The mirror also held — a hedge split
+# across lines could not be stripped, so honest text bounced.
+check "claim after an escaped newline still gates"   2 "$(run false "Refactored the parser.\\nDone.")"
+check "T3 claim after an escaped newline gates"      2 "$(run false "Rebased onto main.\\nMerged the PR.")"
+check "hedge split by an escaped newline does not fire" 0 "$(run false "I don't think\\nthe tests pass.")"
+check "ledger after an escaped newline vouches"      0 "$(run false "Done.\\nVerified: suite green - ran the suite -> 144 pass")"
 # The widened strip must still not shield a real claim that follows a negation.
 check "widened strip still does not shield (green)"  2 "$(run false "Tests were not passing before this change; now everything is fixed and all green.")"
 check "widened strip still does not shield (retry)"  2 "$(run false "The first attempt had not succeeded; the migration succeeded on the retry.")"
@@ -352,6 +384,35 @@ check "prose 'I pushed the logic down' arms (accepted)"  2 "$(run false "I pushe
 # arming flag, which is a 0.8.0 redesign rather than a wider regex.
 multiedit='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"MultiEdit","input":{}}]}}'
 mk "$user" "$multiedit"; check "MultiEdit arms the gate"          2 "$(run false "$claim")"
+
+# Hyphens are legal in an MCP server's config key, and the tool-name class
+# excluded them, so the whole branch failed end-to-end for any hyphenated
+# server. Every MCP fixture here used hyphen-free names, so nothing saw it.
+mcphyph='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__github-mcp__create_pull_request","input":{}}]}}'
+mcphyph2='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__filesystem-server__write_file","input":{}}]}}'
+mk "$user" "$mcphyph";  check "hyphenated MCP server name arms"   2 "$(run false "$claim")"
+mk "$user" "$mcphyph2"; check "hyphenated MCP fs server arms"     2 "$(run false "$claim")"
+
+# bashmut spellings the inventory comment claimed and the patterns missed.
+bashchown='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"chown -R app:app /srv/app"}}]}}'
+bashsedflags='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"sed -E -i s/a/b/ conf.txt"}}]}}'
+bashcurlcombo='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"curl -sLo dist.tgz https://x/y.tgz"}}]}}'
+bashdigit='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"pytest -q > 2026-run.log"}}]}}'
+bashspaced='{"type":"assistant","message":{"content":[{"type":"tool_use","name" : "Bash","input":{"command" : "rm -rf build"}}]}}'
+mk "$user" "$bashchown";     check "chown arms (documented, was missing)"  2 "$(run false "$claim")"
+mk "$user" "$bashsedflags";  check "sed with flags before -i arms"         2 "$(run false "$claim")"
+mk "$user" "$bashcurlcombo"; check "curl combined -sLo arms"               2 "$(run false "$claim")"
+mk "$user" "$bashdigit";     check "redirect to a digit-leading filename arms" 2 "$(run false "$claim")"
+mk "$user" "$bashspaced";    check "spaced \"command\" : key still arms"   2 "$(run false "$claim")"
+mk "$user" "$bashawk";       check "awk numeric comparison still guarded"  0 "$(run false "$claim")"
+
+# Refuted finding, pinned as a regression: a reviewer argued the final message
+# could forge the loop guard or the transcript path by quoting them. It cannot —
+# JSON escaping puts a backslash where the pattern needs a quote. Verified, then
+# pinned, so the protection is a property rather than a coincidence.
+mk "$user" "$edit"
+check "message quoting stop_hook_active cannot bypass" 2 "$(run false "Done. It sets \\\"stop_hook_active\\\" : true in the payload.")"
+check "message quoting transcript_path cannot bypass"  2 "$(run false "Done. It reads \\\"transcript_path\\\": \\\"/nope\\\" first.")"
 
 # the arming window must cover the whole turn, not just its last 600 lines
 # (0.6.1). The escape was correlated with the risk: long tool-heavy turns that
