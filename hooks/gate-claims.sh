@@ -42,9 +42,22 @@ last="$(printf '%s' "$last" | sed -E 's/^"last_assistant_message": *"//; s/"$//'
 # starts punishing the exact candour it exists to buy, which is worse than the
 # miss it was closing. 0.6.1 shipped that regression for one commit: `succeeded`
 # / `successfully` went into claimre alone, so "The deployment has not
-# succeeded." bounced. Pinned now by the three "does not fire" checks.
+# succeeded." bounced. Pinned now by the "does not fire" checks.
+#
+# 0.7.0 widened the gap between negator and stem from a closed list of adverbs
+# to up to four ARBITRARY words, because the closed list only ever covered
+# hedges with no verb in them. Everything a person actually writes when they are
+# being honest carries one — "I don't THINK the tests pass", "I can't CONFIRM
+# the migration succeeded", "no EVIDENCE that the build passes" — and all seven
+# sampled phrasings bounced at 0.6.1, including a plain "Nothing is fixed yet."
+# The trade this makes, deliberately: a long enough sentence can now shield a
+# real claim behind an earlier negation ("This is not ready and the migration
+# succeeded" strips whole). That is a missed bounce, which is the direction the
+# fail-open law already prefers — a bounced honest report is the harm this gate
+# cannot afford. Punctuation ends the run (`[a-z0-9'’-]+` stops at `;` or `.`),
+# which is what keeps the two "still does not shield" checks green.
 judge="$(printf '%s' "$last" | tr '[:upper:]' '[:lower:]')"
-negre="(not|never|cannot|no longer|far from|[a-z]+n['’]+t)( (yet|be|been|being|get|fully|actually|all|completely|entirely|quite|nearly|even|close to)){0,2} (done|finished|implemented|completed?|fixed|resolved|passing|green|shipped|ready|succeeded|successful(ly)?)"
+negre="(not|never|cannot|no longer|far from|no evidence|nothing|unclear|unsure|unverified|doubt|[a-z]+n['’]+t)( [a-z0-9'’-]+){0,4} (done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live)"
 judge="$(printf '%s' "$judge" | sed -E "s/$negre//g")"
 
 # Maintained phrase list, not an exhaustive one — the two-sided log below is its
@@ -59,7 +72,16 @@ judge="$(printf '%s' "$judge" | sed -E "s/$negre//g")"
 # works." is missed) because it false-fires on ordinary prose ("how it works by
 # hashing"), and a conditional "whether the tests pass" DOES arm — at worst one
 # spurious bounce demand, which the design law prices as acceptable.
-claimre='\b(done|finished|implemented|complete|completed|fixed|resolved|passing|shipped|succeeded|good to go|works now|all green|(tests?|checks?|suite|build) (pass(es|ed)?|(are |is )?green)|successfully (ran|deployed|merged|pushed|applied|installed|migrated|completed|built|created|updated|fixed)|ready (to|for) (merge|ship|commit|deploy|push|review))\b'
+#
+# 0.7.0 added the bare past tense of the outward actions — `deployed`, `merged`,
+# `pushed`, and a copula `is/are/now live`. 0.6.1 had closed only the adverbial
+# form, so "Successfully deployed to staging." gated while "Deployed to
+# production." did not: the T3 row of the tier table, the one the method ranks
+# highest, was the least guarded phrasing in the list. `live` needs the copula
+# because the bare word is ordinary prose ("the fixtures live in tests/").
+# Prose cost accepted: "I merged the two helpers" now arms — a turn that edited
+# files and reports work done with no evidence is a fair bounce.
+claimre='\b(done|finished|implemented|complete|completed|fixed|resolved|passing|shipped|succeeded|deployed|merged|pushed|good to go|works now|all green|(is|are|now) live|(tests?|checks?|suite|build) (pass(es|ed)?|(are |is )?green)|successfully (ran|deployed|merged|pushed|applied|installed|migrated|completed|built|created|updated|fixed)|ready (to|for) (merge|ship|commit|deploy|push|review))\b'
 phrase="$(printf '%s' "$judge" | grep -oE "$claimre" | head -n 1)"
 [ -n "$phrase" ] || exit 0
 
@@ -88,7 +110,15 @@ if [ -n "$cut" ]; then
 else
   seg="$(tail -n 600 "$transcript")"   # no real user line anywhere -> bounded fallback
 fi
-if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_]*(edit|replace|insert|write|rename|delete|create|move)[A-Za-z0-9_]*)"'; then
+# The tool-name list is exact and quote-anchored, so a name that merely CONTAINS
+# an editing verb escapes — `MultiEdit` did, and so will the next renamed or
+# vendor-specific writer. Relaxing the anchor is the wrong fix (`TodoWrite` would
+# arm most turns); the right one is a PostToolUse hook that flags the turn as
+# mutating, which retires this whole pattern and is a 0.8.0 redesign. Until then
+# this list is maintained, and its misses are misses in the fail-open direction.
+# 0.7.0 also widened the MCP verbs past the edit family: whatever a server calls
+# it, a send/save/publish/execute/merge changed something outside this session.
+if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_]*(edit|replace|insert|write|rename|delete|create|move|send|save|publish|upload|execute|merge|commit|deploy|append|remove|destroy|drop|patch)[A-Za-z0-9_]*)"'; then
   # Bash-side mutations arm too (0.6.0). Judged ONLY on the "command" values
   # of Bash tool_use lines — text blocks and model-authored "description"
   # fields can't arm. /dev/null redirects are stripped before matching.
@@ -107,7 +137,17 @@ if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|Write|NotebookEdit|Task|
   # `python -c` is NOT a signature: it is overwhelmingly a read-only one-liner,
   # so only `open(..., 'w'|'a')` arms. Pinned both ways by "python write-mode
   # open() arms" / "read-only python -c does not arm".
-  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|(mv|cp|rm|dd|truncate|chmod|wget) )|--in-place|curl [^|]*(-[oO]\b|--output|--remote-name)|ln +-[a-zA-Z]*s|open\([^)]*,.{0,2}[wa][b+]?.{0,2}\)|[^<>&=-]>{1,2} *[A-Za-z_./~$\\]|&>{1,2} *[A-Za-z_./~$\\]'
+  # 0.7.0 added the OUTWARD verbs. Until then the signatures covered writes to
+  # the local disk and stopped there, so the tier table's top row was its
+  # blindest: `gh pr merge`, `npm publish`, `terraform apply`, `kubectl apply`
+  # and `docker push` all left the session without arming, and the claim that
+  # followed ("Merged the PR.") was unlisted too — invisible on both axes at
+  # once. Verb-specific on purpose: `gh pr checks` and `gh pr view` must stay
+  # silent, because fable-verify recommends the first one as the
+  # counting-environment probe and would otherwise arm the turn that proves a
+  # claim. `touch`/`rmdir`/`mkdir` join the word-anchored group for the same
+  # reason `mv`/`cp` are in it.
+  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|gh +(pr|release|issue|repo|gist|secret|workflow) +(create|merge|edit|comment|close|reopen|ready|delete|upload|run|set)|(npm|pnpm|yarn) +publish|terraform +(apply|destroy|import)|kubectl +(apply|create|delete|patch|replace|scale|rollout)|docker +(push|rmi)|(mv|cp|rm|dd|touch|rmdir|mkdir|truncate|chmod|wget) )|--in-place|curl [^|]*(-[oO]\b|--output|--remote-name)|ln +-[a-zA-Z]*s|open\([^)]*,.{0,2}[wa][b+]?.{0,2}\)|[^<>&=-]>{1,2} *[A-Za-z_./~$\\]|&>{1,2} *[A-Za-z_./~$\\]'
   printf '%s' "$cmds" | grep -qE "$bashmut" || exit 0
 fi
 

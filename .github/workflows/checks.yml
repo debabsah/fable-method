@@ -1,0 +1,49 @@
+name: checks
+
+# The plugin's own oracles, run by the machine instead of by a habit. Release
+# flow step 3 says "run the oracles"; a plugin whose thesis is that anything
+# which must happen every time belongs in a hook cannot leave its own suite to
+# whoever remembers.
+on:
+  push:
+  pull_request:
+
+jobs:
+  gate:
+    # Both platforms on purpose. The scripts are tuned against BSD tools (macOS)
+    # and a logged gotcha here is "BSD sed has no case-insensitive flag" — the
+    # inverse (a GNU-only assumption) is only visible on Linux.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: shell syntax
+        run: bash -n hooks/*.sh scripts/*.sh
+      - name: gate and doctor self-checks
+        run: bash hooks/test-gate.sh
+
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: manifests parse
+        run: |
+          for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json hooks/hooks.json; do
+            python3 -m json.tool "$f" > /dev/null && echo "ok: $f"
+          done
+      - name: version matches across both manifests and the README badge
+        # MAINTAINING step 4 is "bump the version in both manifests plus the
+        # README badge". That is three hand-edits kept in sync by memory; a
+        # missed one means `plugin update` sees nothing. Put the bound in the
+        # writer, not in the habit.
+        run: |
+          p=$(python3 -c 'import json;print(json.load(open(".claude-plugin/plugin.json"))["version"])')
+          m=$(python3 -c 'import json;print(json.load(open(".claude-plugin/marketplace.json"))["plugins"][0]["version"])')
+          b=$(grep -oE 'badge/version-[0-9]+\.[0-9]+\.[0-9]+-green' README.md | head -1 | sed -E 's|badge/version-||; s|-green||')
+          a=$(grep -oE 'alt="Version [0-9]+\.[0-9]+\.[0-9]+"' README.md | head -1 | sed -E 's|alt="Version ||; s|"||')
+          echo "plugin.json=$p  marketplace.json=$m  README badge=$b  README alt=$a"
+          test "$p" = "$m" && test "$p" = "$b" && test "$p" = "$a" || {
+            echo "::error::version drift across manifests/README"; exit 1; }

@@ -47,10 +47,14 @@ reminder that must be updated to match, never the other way around.
 2. Edit. For any gate change, **red first**: add the failing check to
    `hooks/test-gate.sh`, watch it fail, then change `hooks/gate-claims.sh`.
 3. Oracles: `bash hooks/test-gate.sh` → `all checks pass`, exit 0;
-   `claude plugin validate .` → `Validation passed`.
+   `claude plugin validate .` → `Validation passed`. CI runs the first one on
+   every push, on Linux *and* macOS (`.github/workflows/checks.yml`) — the
+   plugin cannot leave its own suite to whoever remembers. `plugin validate`
+   stays local: it needs the CLI, and the workflow parses the manifests instead.
 4. Bump the version in **both** `.claude-plugin/plugin.json` and
    `.claude-plugin/marketplace.json`, plus the README badge — `plugin update` sees
-   nothing otherwise.
+   nothing otherwise. CI fails on drift between the three, so this is checked
+   rather than remembered.
 5. Commit and push. Then re-enable, `claude plugin marketplace update fable-method`,
    `claude plugin update fable-method@fable-method` (the bare name fails), and
    `/reload-plugins`. Verify the installed cache: run *its* copy of `test-gate.sh`.
@@ -77,6 +81,14 @@ Bash-mutation signatures and their false-positive guards, incl. the `description
 field), ledger-token content requirements, negation (incl. hedges and typographic
 apostrophes under C locale), fail-open paths, the two-sided log, and the status doctor.
 Every live false-fire so far became a permanent regression case — keep that rule.
+
+The outward verbs (`gh pr merge`, `npm publish`, `terraform apply`, `kubectl apply`,
+`docker push`) are paired in the suite with their read-only siblings (`gh pr checks`,
+`terraform plan`, `kubectl get`). Keep that pairing when adding one: an arming
+signature that also fires on the command which *proves* a claim would arm the
+verification turn itself. Same shape for `claimre`/`negre` — the invariant in the
+script — and for `live`, whose copula form (`is/are/now live`) is what keeps the
+ordinary word ("the fixtures live in tests/") out of the phrase list.
 
 Two behaviors that look like bugs but are design: a subagent's own tool calls live in
 separate transcript files the gate never reads — the Task/Agent *dispatch* is what

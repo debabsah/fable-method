@@ -212,6 +212,92 @@ check "explaining how it works does not fire"      0 "$(run false "Here is how i
 check "'successfully handles' prose does not fire" 0 "$(run false "The parser successfully handles nested quotes, which is why I chose it.")"
 check "conditional 'succeeds' does not fire"       0 "$(run false "This approach succeeds where the regex one fails, so I am using it.")"
 
+# ── 0.7.0: the outward tier ────────────────────────────────────────────────
+# At 0.6.1 the T3 row of the tier table was the LEAST guarded one, on both axes
+# at once: `gh pr merge` did not arm, and "Merged the PR." did not match, so the
+# highest-risk turn in the method was invisible twice over. 0.6.1 had closed the
+# adverbial form ("Successfully deployed") and left the bare past tense.
+mk "$user" "$edit" "$claimtxt"
+check "bare 'Deployed to production.' gates"  2 "$(run false "Deployed to production.")"
+check "bare 'Merged the PR.' gates"           2 "$(run false "Merged the PR.")"
+check "bare 'Pushed to main.' gates"          2 "$(run false "Pushed to main.")"
+check "'The feature is live.' gates"          2 "$(run false "The feature is live.")"
+# ...and their negations, per the claimre/negre invariant: never widen one alone.
+check "'not deployed yet' does not fire"      0 "$(run false "This is not deployed yet.")"
+check "'has not been merged' does not fire"   0 "$(run false "The PR has not been merged.")"
+check "'not pushed' does not fire"            0 "$(run false "The branch is not pushed.")"
+check "'not live yet' does not fire"          0 "$(run false "The feature is not live yet.")"
+# ...and the prose guard: `live` is a common word, so only a copula form counts.
+check "'the fixtures live in tests/' does not fire" 0 "$(run false "The fixtures live in tests/fixtures and are read at import time.")"
+
+# Hedged honesty must not bounce (0.7.0). negre allowed only adverb fillers
+# between the negator and the stem, so any hedge carrying a VERB escaped the
+# strip and the gate bounced the exact candour it exists to buy — 7 of 7 sampled
+# phrasings fired at 0.6.1, including a plain "Nothing is fixed yet."
+check "'don't think the tests pass' does not fire"   0 "$(run false "I don't think the tests pass yet.")"
+check "'can't confirm ... succeeded' does not fire"  0 "$(run false "I can't confirm the migration succeeded.")"
+check "'not sure whether ... fixed' does not fire"   0 "$(run false "I am not sure whether this is fixed.")"
+check "'no evidence that ... passes' does not fire"  0 "$(run false "I have no evidence that the build passes.")"
+check "'unclear if the suite is green' does not fire" 0 "$(run false "It is unclear if the suite is green.")"
+check "'nothing is fixed yet' does not fire"         0 "$(run false "Nothing is fixed yet; here is what I found.")"
+check "'I doubt this is done' does not fire"         0 "$(run false "I doubt this is done.")"
+# The widened strip must still not shield a real claim that follows a negation.
+check "widened strip still does not shield (green)"  2 "$(run false "Tests were not passing before this change; now everything is fixed and all green.")"
+check "widened strip still does not shield (retry)"  2 "$(run false "The first attempt had not succeeded; the migration succeeded on the retry.")"
+# Accepted, priced miss: a negation TRAILING its claim cannot be stripped by a
+# prefix rule, so this still bounces — same class as the conditional "whether the
+# tests pass" already documented in the script. Cost is one bounce demand.
+check "trailing negation still bounces (accepted)"   2 "$(run false "Whether the tests pass is still unknown.")"
+
+# Outward Bash verbs arm the gate (0.7.0) — publish/merge/deploy leave no `>`,
+# no `sed -i` and no bare `git`, and they are the T3 actions the tier table
+# ranks highest. The read-only `gh` forms must stay silent: fable-verify itself
+# recommends `gh pr checks` as the counting-environment probe.
+bashghcreate='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr create --title x --body y"}}]}}'
+bashghmerge='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr merge 12 --squash"}}]}}'
+bashnpmpub='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"npm publish --access public"}}]}}'
+bashtf='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"terraform apply -auto-approve"}}]}}'
+bashk8s='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"kubectl apply -f deploy.yaml"}}]}}'
+bashdpush='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"docker push registry.io/img:1.0"}}]}}'
+bashtouch='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"touch NEWFILE.md"}}]}}'
+bashrmdir='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"rmdir build"}}]}}'
+bashghchecks='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr checks 12 --watch"}}]}}'
+bashghview='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr view 12 --json state,mergeable"}}]}}'
+bashtfplan='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"terraform plan -no-color | tail -40"}}]}}'
+bashk8sget='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"kubectl get pods -o wide"}}]}}'
+
+mk "$user" "$bashghcreate"; check "gh pr create arms the gate"        2 "$(run false "$claim")"
+mk "$user" "$bashghmerge";  check "gh pr merge arms the gate"         2 "$(run false "Merged the PR.")"
+mk "$user" "$bashnpmpub";   check "npm publish arms the gate"         2 "$(run false "$claim")"
+mk "$user" "$bashtf";       check "terraform apply arms the gate"     2 "$(run false "$claim")"
+mk "$user" "$bashk8s";      check "kubectl apply arms the gate"       2 "$(run false "$claim")"
+mk "$user" "$bashdpush";    check "docker push arms the gate"         2 "$(run false "$claim")"
+mk "$user" "$bashtouch";    check "touch arms the gate"               2 "$(run false "$claim")"
+mk "$user" "$bashrmdir";    check "rmdir arms the gate"               2 "$(run false "$claim")"
+mk "$user" "$bashghchecks"; check "gh pr checks (read-only) does not arm" 0 "$(run false "$claim")"
+mk "$user" "$bashghview";   check "gh pr view (read-only) does not arm"   0 "$(run false "$claim")"
+mk "$user" "$bashtfplan";   check "terraform plan does not arm"       0 "$(run false "$claim")"
+mk "$user" "$bashk8sget";   check "kubectl get does not arm"          0 "$(run false "$claim")"
+
+# MCP write verbs beyond the edit family (0.7.0). Whatever the server calls it,
+# a send/save/publish/execute is delegated work that changed something.
+mcpsend='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__slack__send_message","input":{}}]}}'
+mcpexec='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__supabase__execute_sql","input":{}}]}}'
+mcpmerge='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__github__merge_pull_request","input":{}}]}}'
+mcpsave='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__memory__memory_save","input":{}}]}}'
+mcpread='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__serena__find_symbol","input":{}}]}}'
+mk "$user" "$mcpsend";  check "MCP send verb arms the gate"       2 "$(run false "$claim")"
+mk "$user" "$mcpexec";  check "MCP execute verb arms the gate"    2 "$(run false "$claim")"
+mk "$user" "$mcpmerge"; check "MCP merge verb arms the gate"      2 "$(run false "$claim")"
+mk "$user" "$mcpsave";  check "MCP save verb arms the gate"       2 "$(run false "$claim")"
+mk "$user" "$mcpread";  check "MCP read-only verb does not arm"   0 "$(run false "$claim")"
+
+# The tool-name pattern is quote-anchored, so a name that merely CONTAINS Edit
+# escapes. Pinning the one real instance; the structural fix is a PostToolUse
+# arming flag, which is a 0.8.0 redesign rather than a wider regex.
+multiedit='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"MultiEdit","input":{}}]}}'
+mk "$user" "$multiedit"; check "MultiEdit arms the gate"          2 "$(run false "$claim")"
+
 # the arming window must cover the whole turn, not just its last 600 lines
 # (0.6.1). The escape was correlated with the risk: long tool-heavy turns that
 # edit early and claim at the end were the only ones silently skipping the gate.

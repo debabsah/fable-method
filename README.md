@@ -4,10 +4,10 @@
 
 <p align="center">
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="./.claude-plugin/plugin.json"><img alt="Version 0.6.1" src="https://img.shields.io/badge/version-0.6.1-green.svg"></a>
+  <a href="./.claude-plugin/plugin.json"><img alt="Version 0.7.0" src="https://img.shields.io/badge/version-0.7.0-green.svg"></a>
   <a href="https://docs.claude.com/en/docs/claude-code"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg"></a>
   <a href="#self-contained-by-design"><img alt="Plugin dependencies: none" src="https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg"></a>
-  <a href="#requirements"><img alt="Target: Opus 4.8" src="https://img.shields.io/badge/target-Opus%204.8-orange.svg"></a>
+  <a href="#requirements"><img alt="Target: a frontier Claude model" src="https://img.shields.io/badge/target-frontier%20Claude%20model-orange.svg"></a>
 </p>
 
 `fable-method` is a self-contained Claude Code plugin for developers doing real engineering work with Claude. It installs a set of **gates** — checks the model runs at each step — so it stops skipping the effortful ones under momentum:
@@ -19,7 +19,7 @@
 - Diagnose by designed experiment when something breaks, instead of patch-and-pray.
 - Report what's verified apart from what's assumed.
 
-The claim moment gets a **deterministic backstop**: a Stop hook bounces a completion claim — once — when the turn changed files and the claim carries no ledger. Detection is a maintained phrase-list, so it's heuristic in what it catches and mechanical in how it responds. "Done" arrives as `Verified: <what> — ran <command> -> saw <result>`, or an honest `Assumed:`/`PROVISIONAL`. You act on the report by reading one short list — what it says it couldn't check — instead of re-deriving the work.
+The claim moment gets a **deterministic backstop**: a Stop hook bounces a completion claim — once — when the turn changed something and the claim carries no ledger. Detection is a maintained phrase-list, so it's heuristic in what it catches and mechanical in how it responds. "Done" arrives as `Verified: <what> — ran <command> -> saw <result>`, or an honest `Assumed:`/`PROVISIONAL`. You act on the report by reading one short list — what it says it couldn't check — instead of re-deriving the work.
 
 Those reflexes are reverse-engineered from how Fable — Claude's `claude-fable-5` model — actually worked. ([Where it came from](#where-it-came-from).)
 
@@ -239,7 +239,7 @@ See [`skills/fable-method/references/project-template.md`](skills/fable-method/r
 Two hooks — memory in, calibration out:
 
 - **`SessionStart`** — surfaces the current project's overlay pointer and one line per in-flight task file (`.fable/tasks/*.md`, each with its `next:` action) as ambient context; silent when there's neither.
-- **`Stop` — the calibration gate.** When the **current turn** changed something (built-in or MCP editing tools, shell-side mutations, or a subagent dispatch — delegated work still needs its ledger) and its final message ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. The final message comes from Claude Code's supported Stop-hook field, not transcript reconstruction; a bare `Verified:`/`Assumed:` with no content attached doesn't vouch (a bare `PROVISIONAL` is legal — it downgrades the result rather than claiming anything); negated statements ("not done yet") don't fire it. Read "completion claim" literally: it means *a phrase on a maintained list*, so an unlisted phrasing passes ungated — and the block is one reminder per turn, not a wall, since a restated claim passes on the next stop (a trapped session is the worse failure). Shell-side mutations arm it too — high-precision signatures (`sed -i`, real redirects, `tee`, git state operations, `curl -o`, `wget`, `dd`, a write-mode `open()`) judged only on the command text of Bash tool calls, so prose that merely *mentions* them can't. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Remaining dark paths (novel completion phrasings, exotic write paths) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
+- **`Stop` — the calibration gate.** When the **current turn** changed something (built-in or MCP editing tools, shell-side mutations, an outward action like a merge or a publish, or a subagent dispatch — delegated work still needs its ledger) and its final message ends on a completion claim with no `Verified:`/`Assumed:`/`PROVISIONAL` marker, the gate blocks the stop once and sends the model back to run the proving command now — or downgrade the claim. The final message comes from Claude Code's supported Stop-hook field, not transcript reconstruction; a bare `Verified:`/`Assumed:` with no content attached doesn't vouch (a bare `PROVISIONAL` is legal — it downgrades the result rather than claiming anything); negated statements ("not done yet") don't fire it. Read "completion claim" literally: it means *a phrase on a maintained list*, so an unlisted phrasing passes ungated — and the block is one reminder per turn, not a wall, since a restated claim passes on the next stop (a trapped session is the worse failure). Shell-side and outward commands arm it too — high-precision signatures (`sed -i`, real redirects, `tee`, git state operations, `curl -o`, `wget`, `dd`, a write-mode `open()`, and the publishing verbs `gh pr create`/`merge`, `npm publish`, `terraform apply`, `kubectl apply`, `docker push`) judged only on the command text of Bash tool calls, so prose that merely *mentions* them can't. The read-only forms of those same tools stay silent, because `gh pr checks` is how you *prove* a claim rather than make one. Loop-safe, fail-open on any parsing doubt. In projects with an overlay it logs every bounce *and* every armed pass to `.fable/gate-log`, with the matched phrase — so both failure directions, over-firing and under-firing, are tunable from data rather than guesswork. Remaining dark paths (novel completion phrasings, exotic write paths) are documented in the script and tuned from that log. Self-checks: `bash hooks/test-gate.sh`.
 
 ### What's enforced, and by what
 
@@ -306,7 +306,7 @@ Your job, even when everything works: read the short `Assumed:` list, and rule o
 
 - **Claude Code** with plugin support.
 - **Bash, git, and standard POSIX tools** — the hooks are shell scripts, developed and tested on macOS/Linux (Windows untested).
-- **A capable model.** Built and tuned for **Opus 4.8 at medium–xhigh effort**. The design assumption is deliberate: a strong model already knows these moves; what it still lacks is exactly what's installed here — deterministic firing at the claim moment (reflexes drift under momentum and at lower effort), your project's definition of "correct," and one uniform trust format.
+- **A capable model** at **medium–xhigh effort** — developed against Opus 4.8, and current for the Claude 5 family. The design assumption is deliberate: a strong model already knows these moves; what it still lacks is exactly what's installed here — deterministic firing at the claim moment (reflexes drift under momentum and at lower effort), your project's definition of "correct," and one uniform trust format.
 
 ---
 
