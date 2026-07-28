@@ -50,15 +50,45 @@ last="$(printf '%s' "$last" | sed -E 's/^"last_assistant_message": *"//; s/"$//'
 # being honest carries one — "I don't THINK the tests pass", "I can't CONFIRM
 # the migration succeeded", "no EVIDENCE that the build passes" — and all seven
 # sampled phrasings bounced at 0.6.1, including a plain "Nothing is fixed yet."
-# The trade this makes, deliberately: a long enough sentence can now shield a
-# real claim behind an earlier negation ("This is not ready and the migration
-# succeeded" strips whole). That is a missed bounce, which is the direction the
-# fail-open law already prefers — a bounced honest report is the harm this gate
-# cannot afford. Punctuation ends the run (`[a-z0-9'’-]+` stops at `;` or `.`),
-# which is what keeps the two "still does not shield" checks green.
+#
+# The gap is applied NEAREST-STEM-FIRST, and that ordering is the whole
+# correctness argument. A single pattern with `{0,4}` is matched leftmost-
+# LONGEST, so a second stem inside the gap gets eaten with the first: "The tests
+# are not passing but the build passes" stripped WHOLE and the real claim left
+# with it. The negation swallowed the sentence it was supposed to leave
+# standing — the same class of defect as the one this release opened with, in
+# the mirror direction. Running gap 0 first consumes "not passing" while "build
+# passes" is not yet a candidate. Do not collapse these five expressions back
+# into one quantifier.
+#
+# The stem may absorb one FOLLOWING stem (`successful(ly)? deployed`), because
+# nearest-first would otherwise stop at the adverb and leave the verb behind:
+# "not successfully deployed" would strip to "deployed" and bounce.
 judge="$(printf '%s' "$last" | tr '[:upper:]' '[:lower:]')"
-negre="(not|never|cannot|no longer|far from|no evidence|nothing|unclear|unsure|unverified|doubt|[a-z]+n['’]+t)( [a-z0-9'’-]+){0,4} (done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live)"
-judge="$(printf '%s' "$judge" | sed -E "s/$negre//g")"
+# `doubt` and `unverified` are deliberately NOT negators: `doubt` matched "no
+# doubt this is done", the strongest form of the claim, and `unverified` matched
+# "the unverified path is fixed". A negator list assembled by sampling hedges
+# picks up certainty intensifiers by string coincidence. The cost is that a bare
+# "I doubt this is done" bounces, which asks for an Assumed: line — the cheap
+# direction. `none( of)?` covers "None of the tests pass"; a partial-result
+# report carrying no negator at all ("12 of 40 tests passed") is out of reach of
+# a negation rule and stays a known bounce.
+negre="(no evidence|no longer|nothing|none( of)?|not|never|cannot|unclear|unsure|far from|[a-z]+n['’]+t)"
+negstem="(done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live)"
+# Every stem carries an explicit trailing delimiter, and the match is replaced
+# by a space rather than deleted. Without it `completed?` matches the PREFIX of
+# "completely", so the nearest-first pass strips "not complete" and leaves "ly
+# done" — bouncing "This is not completely done." A word-boundary escape is not
+# available here: BSD sed supports neither `\b` nor GNU's syntax, and it fails
+# SILENTLY (matching nothing), which would disable the whole negation strip on
+# macOS while every Linux check stayed green. Verified by running it, not by
+# reading a man page.
+judge="$(printf '%s' "$judge" | sed -E \
+  -e "s/$negre $negstem( $negstem)?([^a-z]|$)/ /g" \
+  -e "s/$negre( [a-z0-9'’-]+) $negstem( $negstem)?([^a-z]|$)/ /g" \
+  -e "s/$negre( [a-z0-9'’-]+){2} $negstem( $negstem)?([^a-z]|$)/ /g" \
+  -e "s/$negre( [a-z0-9'’-]+){3} $negstem( $negstem)?([^a-z]|$)/ /g" \
+  -e "s/$negre( [a-z0-9'’-]+){4} $negstem( $negstem)?([^a-z]|$)/ /g")"
 
 # Maintained phrase list, not an exhaustive one — the two-sided log below is its
 # tuning data, and the docs say so rather than implying full recall. 0.6.1 added
@@ -117,8 +147,14 @@ fi
 # mutating, which retires this whole pattern and is a 0.8.0 redesign. Until then
 # this list is maintained, and its misses are misses in the fail-open direction.
 # 0.7.0 also widened the MCP verbs past the edit family: whatever a server calls
-# it, a send/save/publish/execute/merge changed something outside this session.
-if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_]*(edit|replace|insert|write|rename|delete|create|move|send|save|publish|upload|execute|merge|commit|deploy|append|remove|destroy|drop|patch)[A-Za-z0-9_]*)"'; then
+# it, a send/save/publish/merge changed something outside this session. The
+# match is an unanchored substring, so the list must exclude verbs that live
+# inside ordinary READ names: `commit`, `deploy`, `execute`, `patch` and `drop`
+# were tried and removed, because `list_commits`, `list_deployments`,
+# `execute_query` and `dispatch_*` all armed on a plural noun. The miss that
+# buys (a genuine `execute_sql` write) is in the fail-open direction; arming
+# every database read is not.
+if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|NotebookEdit|Task|Agent|mcp__[A-Za-z0-9_]*(edit|replace|insert|write|rename|delete|create|move|send|save|publish|upload|merge|append|remove|destroy)[A-Za-z0-9_]*)"'; then
   # Bash-side mutations arm too (0.6.0). Judged ONLY on the "command" values
   # of Bash tool_use lines — text blocks and model-authored "description"
   # fields can't arm. /dev/null redirects are stripped before matching.
@@ -147,7 +183,7 @@ if ! printf '%s\n' "$seg" | grep -qE '"name" *: *"(Edit|MultiEdit|Write|Notebook
   # counting-environment probe and would otherwise arm the turn that proves a
   # claim. `touch`/`rmdir`/`mkdir` join the word-anchored group for the same
   # reason `mv`/`cp` are in it.
-  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|gh +(pr|release|issue|repo|gist|secret|workflow) +(create|merge|edit|comment|close|reopen|ready|delete|upload|run|set)|(npm|pnpm|yarn) +publish|terraform +(apply|destroy|import)|kubectl +(apply|create|delete|patch|replace|scale|rollout)|docker +(push|rmi)|(mv|cp|rm|dd|touch|rmdir|mkdir|truncate|chmod|wget) )|--in-place|curl [^|]*(-[oO]\b|--output|--remote-name)|ln +-[a-zA-Z]*s|open\([^)]*,.{0,2}[wa][b+]?.{0,2}\)|[^<>&=-]>{1,2} *[A-Za-z_./~$\\]|&>{1,2} *[A-Za-z_./~$\\]'
+  bashmut='(^|\\n|[^-A-Za-z0-9_])(sed +-[a-zA-Z]*i|tee |git +(-C +[^ ]+ +)?(add|commit|push|merge|apply|rm|mv|reset|restore|clean|stash|checkout)($|[^-A-Za-z0-9_])|gh +(pr|release|issue|repo|gist|secret|workflow) +(create|merge|edit|comment|close|reopen|ready|delete|upload|run|set)|(npm|pnpm|yarn) +publish|terraform +(apply|destroy|import)|kubectl +(apply|create|delete|patch|replace|scale)|docker +(push|rmi)|(mv|cp|rm|dd|touch|rmdir|mkdir|truncate|chmod|wget) )|--in-place|curl [^|]*(-[oO]\b|--output|--remote-name)|ln +-[a-zA-Z]*s|open\([^)]*,.{0,2}[wa][b+]?.{0,2}\)|[^<>&=-]>{1,2} *[A-Za-z_./~$\\]|&>{1,2} *[A-Za-z_./~$\\]'
   printf '%s' "$cmds" | grep -qE "$bashmut" || exit 0
 fi
 

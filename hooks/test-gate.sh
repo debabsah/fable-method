@@ -240,7 +240,27 @@ check "'not sure whether ... fixed' does not fire"   0 "$(run false "I am not su
 check "'no evidence that ... passes' does not fire"  0 "$(run false "I have no evidence that the build passes.")"
 check "'unclear if the suite is green' does not fire" 0 "$(run false "It is unclear if the suite is green.")"
 check "'nothing is fixed yet' does not fire"         0 "$(run false "Nothing is fixed yet; here is what I found.")"
-check "'I doubt this is done' does not fire"         0 "$(run false "I doubt this is done.")"
+
+# ── 0.7.0 RC, blind clean-room review ──────────────────────────────────────
+# The widened strip was matched leftmost-LONGEST, so a second stem within the
+# gap was eaten along with the first: the negation swallowed the very claim it
+# was supposed to leave standing. The strip is now applied nearest-stem-first
+# (gap 0, then 1, ... 4), so "not passing" is consumed before "build passes" is
+# ever a candidate. Note the third case: 0.7.0 shipped it as an ACCEPTED shield
+# and the fix retires it, so the accepted cost is gone rather than documented.
+check "negation does not swallow a later claim (but)"     2 "$(run false "The tests are not passing but the build passes.")"
+check "negation does not swallow a later claim (because)" 2 "$(run false "The migration is not done because the deploy succeeded.")"
+check "negation does not shield within one clause"        2 "$(run false "This is not ready and the migration succeeded.")"
+# A negator list assembled by sampling hedges picked up a certainty intensifier
+# by string coincidence: `doubt` matched "no doubt", which is the STRONGEST form
+# of the claim. Both it and `unverified` are gone from the list; the cost is that
+# a bare "I doubt this is done" now bounces, which asks for an Assumed: line
+# rather than silently exempting the most confident sentence in the language.
+check "'no doubt ... is done' is a claim"                 2 "$(run false "I have no doubt this is done.")"
+check "'no doubt ... succeeded' is a claim"               2 "$(run false "There is no doubt the migration succeeded.")"
+check "'the unverified path is fixed' is a claim"         2 "$(run false "The unverified path is fixed.")"
+check "bare 'I doubt this is done' bounces (accepted)"    2 "$(run false "I doubt this is done.")"
+check "'None of the tests pass' does not fire"            0 "$(run false "None of the tests pass.")"
 # The widened strip must still not shield a real claim that follows a negation.
 check "widened strip still does not shield (green)"  2 "$(run false "Tests were not passing before this change; now everything is fixed and all green.")"
 check "widened strip still does not shield (retry)"  2 "$(run false "The first attempt had not succeeded; the migration succeeded on the retry.")"
@@ -278,6 +298,21 @@ mk "$user" "$bashghchecks"; check "gh pr checks (read-only) does not arm" 0 "$(r
 mk "$user" "$bashghview";   check "gh pr view (read-only) does not arm"   0 "$(run false "$claim")"
 mk "$user" "$bashtfplan";   check "terraform plan does not arm"       0 "$(run false "$claim")"
 mk "$user" "$bashk8sget";   check "kubectl get does not arm"          0 "$(run false "$claim")"
+# The read-only siblings the first pass missed. `kubectl rollout status` is the
+# canonical "did the deploy land" probe — arming on it meant the gate fired on
+# the command that PROVES a claim, which MAINTAINING names as forbidden in the
+# same release that shipped it. `npm publish` and `docker push` had no paired
+# negative at all, so nothing pinned the width of those two verbs.
+bashk8sroll='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"kubectl rollout status deploy/api --timeout=60s"}}]}}'
+bashnpmview='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"npm view lodash versions --json"}}]}}'
+bashdpull='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"docker pull alpine:3"}}]}}'
+mk "$user" "$bashk8sroll";  check "kubectl rollout status does not arm" 0 "$(run false "$claim")"
+mk "$user" "$bashnpmview";  check "npm view does not arm"              0 "$(run false "$claim")"
+mk "$user" "$bashdpull";    check "docker pull does not arm"           0 "$(run false "$claim")"
+# The whole point, stated as one check: a turn that only PROBED must not be
+# asked to prove itself. Arming and claim-recall each looked defensible alone
+# and composed into a bounce on a turn that changed nothing.
+mk "$user" "$bashk8sroll";  check "probe-only turn does not bounce a deploy claim" 0 "$(run false "Deployed to production.")"
 
 # MCP write verbs beyond the edit family (0.7.0). Whatever the server calls it,
 # a send/save/publish/execute is delegated work that changed something.
@@ -285,12 +320,32 @@ mcpsend='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mc
 mcpexec='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__supabase__execute_sql","input":{}}]}}'
 mcpmerge='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__github__merge_pull_request","input":{}}]}}'
 mcpsave='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__memory__memory_save","input":{}}]}}'
+# The old negative used a name carrying NONE of the verbs, before or after the
+# widening — it could not fail for the change it was named after. These two can:
+# both are read-only names that the substring list matched through a plural noun.
 mcpread='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__serena__find_symbol","input":{}}]}}'
+mcplistc='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__github__list_commits","input":{}}]}}'
+mcplistd='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__vercel__list_deployments","input":{}}]}}'
+mcpquery='{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__db__execute_query","input":{}}]}}'
 mk "$user" "$mcpsend";  check "MCP send verb arms the gate"       2 "$(run false "$claim")"
-mk "$user" "$mcpexec";  check "MCP execute verb arms the gate"    2 "$(run false "$claim")"
+# `execute` was tried as a verb and removed: it armed `execute_query` on every
+# database READ. Losing a genuine `execute_sql` write is the fail-open direction;
+# arming every read is not. Pinned so the next widening re-argues it.
+mk "$user" "$mcpexec";  check "MCP execute_sql no longer arms (priced miss)" 0 "$(run false "$claim")"
 mk "$user" "$mcpmerge"; check "MCP merge verb arms the gate"      2 "$(run false "$claim")"
 mk "$user" "$mcpsave";  check "MCP save verb arms the gate"       2 "$(run false "$claim")"
 mk "$user" "$mcpread";  check "MCP read-only verb does not arm"   0 "$(run false "$claim")"
+mk "$user" "$mcplistc"; check "MCP list_commits does not arm"     0 "$(run false "$claim")"
+mk "$user" "$mcplistd"; check "MCP list_deployments does not arm" 0 "$(run false "$claim")"
+mk "$user" "$mcpquery"; check "MCP execute_query does not arm"    0 "$(run false "$claim")"
+
+# Accepted cost, pinned so it stays a decision rather than becoming a surprise:
+# the outward verbs are ordinary engineering prose too, and a turn that edited
+# files and says it merged something with no evidence is a fair bounce. Pinning
+# it is what makes the next widening notice the price.
+mk "$user" "$edit"
+check "prose 'I merged the two helpers' arms (accepted)" 2 "$(run false "I merged the two helper functions into one.")"
+check "prose 'I pushed the logic down' arms (accepted)"  2 "$(run false "I pushed the validation logic down into the boundary function.")"
 
 # The tool-name pattern is quote-anchored, so a name that merely CONTAINS Edit
 # escapes. Pinning the one real instance; the structural fix is a PostToolUse
