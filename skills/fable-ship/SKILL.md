@@ -18,6 +18,7 @@ The report is part of the work, not an afterthought. Ship a **calibrated** claim
 - **State the tier and its gates.** One line: `Tier: Tn — gates run: <verify / review lenses / human gate>`. A skipped gate that leaves no trace is invisible exactly when it matters.
 - **Never soften a real problem — including your own.** Flag anything the human must decide (⚠️), state it plainly with the evidence, and repeat the flag into every downstream artifact (PR body, log, memory), not just the chat.
 - **End with what the reader still owns.** Even a perfect report leaves a short list: every `Assumed:` line, plus any T3 (outward/production) action gated to the human. Say it explicitly — worry-less means a short, honest residual list, not an empty one.
+- **Close in the reader's language: where we are, what's next.** After the ledger, two plain-language lines — the state of the work, and the single next move with whose it is. No session-jargon: a label coined mid-work (a codename, a phase number, an internal shorthand) gets one plain-word gloss or stays out of the report. The reader is catching up, not replaying your process — findings go above; the ending is orientation.
 
 ## Docs-as-done
 
