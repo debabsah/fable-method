@@ -91,7 +91,7 @@ negre="(no evidence|no longer|nothing|none( of)?|not|never|cannot|unclear|unsure
 # Every stem `claimre` carries must appear here — including the two multi-word
 # ones. `good to go` and `works now` were absent for three releases, so the two
 # most deflated status reports in the vocabulary ("Nothing works now.") bounced.
-negstem="(done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live|good to go|works now)"
+negstem="(done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|green|shipped|ready|succeeded|successful(ly)?|deployed|merged|pushed|live|good to go|works now|wrapped( up)?|(all )?set|up_and_running|work(s|ing)?( as expected)?|taken( care of)?|in good shape|no (known |remaining |outstanding )?(issues|errors|problems|failures))"
 # Clause conjunctions become hard barriers before the strip runs, because the
 # nearest-first ordering only protects the sentence when the negator's OWN stem
 # sits at gap 0. When the negated word is not a stem — "isn't PERFECT but the
@@ -102,6 +102,10 @@ negstem="(done|finished|implemented|completed?|fixed|resolved|pass(es|ed|ing)?|g
 # the migration succeeded" reached over it one synonym away). The filler class
 # already cannot cross `.` or `;`, so promoting these words to `.` is the same
 # mechanism, applied to the boundaries punctuation does not mark.
+# One claim stem legitimately contains a conjunction: "up and running" would be
+# split by the barrier promotion below and never match. Fuse it into a single
+# token first; both stem lists carry the fused form.
+judge="$(printf '%s' "$judge" | sed -E 's/up and running/up_and_running/g')"
 judge="$(printf '%s' "$judge" | sed -E 's/ (but|and|however|although|though|whereas|otherwise|doubt) / . /g')"
 # Every stem carries an explicit trailing delimiter, and the match is replaced
 # by a space rather than deleted. Without it `completed?` matches the PREFIX of
@@ -139,7 +143,19 @@ judge="$(printf '%s' "$judge" | sed -E \
 # because the bare word is ordinary prose ("the fixtures live in tests/").
 # Prose cost accepted: "I merged the two helpers" now arms — a turn that edited
 # files and reports work done with no evidence is a fair bounce.
-claimre='\b(done|finished|implemented|complete|completed|fixed|resolved|passing|shipped|succeeded|deployed|merged|pushed|good to go|works now|all green|(is|are|now) live|(tests?|checks?|suite|build) (pass(es|ed)?|(are |is )?green)|successfully (ran|deployed|merged|pushed|applied|installed|migrated|completed|built|created|updated|fixed)|ready (to|for) (merge|ship|commit|deploy|push|review))\b'
+#
+# 0.8.0 added the conversational status-summary stems the round-2 study showed
+# drifting while ledgered reports held: `wrapped up`, `all set` (also arms
+# "all set up" — itself a completion claim), `up and running`, `works/working
+# as expected`, `taken care of`, `in good shape`, and the negative-form vouch
+# `no (known/remaining/outstanding) issues/errors/problems/failures` — "No
+# issues found." claims exactly as hard as "Done." and had no stem. Each new
+# stem is mirrored in negstem (standing invariant); the no-issues family sits
+# in BOTH lists because it is a claim on its own and a strippable target when a
+# real negator precedes it ("can't promise there are no issues"). Prose cost
+# accepted: "no issues with A, but B is broken" arms on its first clause — a
+# mixed report vouching for A ungated was the drift class itself.
+claimre='\b(done|finished|implemented|complete|completed|fixed|resolved|passing|shipped|succeeded|deployed|merged|pushed|good to go|works now|all green|(is|are|now) live|(tests?|checks?|suite|build) (pass(es|ed)?|(are |is )?green)|successfully (ran|deployed|merged|pushed|applied|installed|migrated|completed|built|created|updated|fixed)|ready (to|for) (merge|ship|commit|deploy|push|review)|wrapped up|all set|up_and_running|work(s|ing)? as expected|taken care of|in good shape|no (known |remaining |outstanding )?(issues|errors|problems|failures)( (found|left|remain(ing)?))?)\b'
 phrase="$(printf '%s' "$judge" | grep -oE "$claimre" | head -n 1)"
 [ -n "$phrase" ] || exit 0
 

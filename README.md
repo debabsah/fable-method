@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-  <a href="./.claude-plugin/plugin.json"><img alt="Version 0.7.0" src="https://img.shields.io/badge/version-0.7.0-green.svg"></a>
+  <a href="./.claude-plugin/plugin.json"><img alt="Version 0.8.0" src="https://img.shields.io/badge/version-0.8.0-green.svg"></a>
   <a href="https://docs.claude.com/en/docs/claude-code"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg"></a>
   <a href="#self-contained-by-design"><img alt="Plugin dependencies: none" src="https://img.shields.io/badge/plugin%20deps-none-brightgreen.svg"></a>
   <a href="#requirements"><img alt="Target: a frontier Claude model" src="https://img.shields.io/badge/target-frontier%20Claude%20model-orange.svg"></a>

@@ -517,5 +517,29 @@ printf '%s' "$gout" | grep -q "WARNING"; check "tracked .fable/ DOES warn"      
 rm -rf "$gt"
 rm -rf "$ijt"
 
+
+# 0.8.0: conversational status-summary stems — the drift class the round-2
+# study localized (drift lived in conversational status framing, not in
+# gate-mediated ledger reports). Each stem ships with its negre mirror per the
+# standing invariant. The no-issues family is a NEGATIVE-FORM completion claim
+# ("No issues found." is a vouch, not a hedge); it also enters negstem so a
+# hedge that negates it ("can't promise there are no issues") still strips.
+mk "$user" "$edit" "$claimtxt"
+check "wrapped up gates"                      2 "$(run false "Wrapped up the migration work.")"
+check "hedged wrapped-up does not fire"       0 "$(run false "I have not wrapped up the migration yet.")"
+check "all set gates"                         2 "$(run false "You are all set.")"
+check "not all set does not fire"             0 "$(run false "This is not all set yet; two steps remain.")"
+check "up and running gates"                  2 "$(run false "The server is up and running.")"
+check "not up and running does not fire"      0 "$(run false "The server is not up and running yet.")"
+check "works-as-expected gates"               2 "$(run false "Everything works as expected.")"
+check "not working as expected does not fire" 0 "$(run false "The exporter is not working as expected.")"
+check "taken care of gates"                   2 "$(run false "That is taken care of.")"
+check "not taken care of does not fire"       0 "$(run false "The cleanup is not taken care of yet.")"
+check "in good shape gates"                   2 "$(run false "The branch is in good shape.")"
+check "not in good shape does not fire"       0 "$(run false "The branch is not in good shape yet.")"
+check "no-issues claim gates"                 2 "$(run false "No issues found.")"
+check "no remaining issues gates"             2 "$(run false "There are no remaining issues.")"
+check "hedged no-issues does not fire"        0 "$(run false "I cannot promise there are no issues left.")"
+
 if [ "$fails" -eq 0 ]; then echo "all checks pass ($checks)"; else echo "$fails check(s) FAILED of $checks"; fi
 exit "$fails"
