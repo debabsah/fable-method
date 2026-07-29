@@ -11,3 +11,6 @@ Thumbs.db
 
 # fable-method project overlay (per-machine method memory, never committed)
 .fable/
+
+# godmode trial state (per-machine, never committed)
+.godmode/
