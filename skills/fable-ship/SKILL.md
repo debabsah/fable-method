@@ -33,7 +33,7 @@ If `.fable/project.md` exists, **fold in what this task confirmed** — durable 
 1. **Append** every `Verified:` line from the final report to `.fable/claims-log` (`date · claim · command`) — this is what `fable-debug` falsifies against when a vouched-for behavior later breaks.
 2. **Route** undischarged `Assumed:`/`PROVISIONAL` lines to `.fable/residuals.md` (the SessionStart hook surfaces the open count until they're discharged).
 3. **Fold** what this task confirmed into the overlay.
-4. **Only then, retire the task file** (`.fable/tasks/<slug>.md`) — promote surviving decisions and durable facts into the overlay or the project's own docs, then delete it. An in-flight pointer that outlives the work is a lie the next session inherits.
+4. **Only then, retire the task file** (`.fable/tasks/<slug>.md`) — promote surviving decisions into the project's committed decision records (`docs/decisions/`, if the project keeps them) or the overlay, and durable facts into the overlay or the project's own docs, then delete it. An in-flight pointer that outlives the work is a lie the next session inherits.
 
 The task file is the transaction's commit record: while it exists, an interrupt is recoverable — you re-read it and redo the steps. Delete it first and an interrupt destroys the `Assumed:` list with no trace, SessionStart reports *nothing open*, and the run reads as a clean finish. A silent false-clean is the worst state this record can reach, and step order is the whole defence.
 
